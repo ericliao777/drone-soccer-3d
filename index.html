@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>無人機足球・十大術科訓練場</title>
+<style>
+  :root{
+    --ground:#0a0f16; --panel:#111927; --panel2:#0d1520;
+    --line:#223148; --line-soft:#1a2536;
+    --ink:#e9f1f7; --dim:#8ca3b8; --faint:#5c7186;
+    --hud:#4fe3a3; --accent:#ff8a3c; --accent-deep:#e06a1a;
+    --mono:Consolas,"Cascadia Mono",monospace;
+    --cjk:"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(1200px 600px at 70% -10%, rgba(79,168,255,.08), transparent 60%),
+      radial-gradient(900px 500px at 10% 110%, rgba(255,138,60,.07), transparent 60%),
+      var(--ground);
+    color:var(--ink); font-family:var(--cjk); padding:28px 20px;
+  }
+  .wrap{max-width:680px; width:100%}
+  .kicker{font-family:var(--mono); color:var(--hud); font-size:.8rem; letter-spacing:.28em}
+  h1{font-size:clamp(1.6rem,5vw,2.4rem); font-weight:900; margin:.35em 0 .2em; line-height:1.2; text-wrap:balance}
+  h1 .accent{color:var(--accent)}
+  p.lead{color:var(--dim); line-height:1.8; font-size:.95rem; margin:0 0 26px}
+  .cards{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:560px){ .cards{grid-template-columns:1fr} }
+  a.card{
+    display:flex; flex-direction:column; gap:8px; text-decoration:none; color:var(--ink);
+    background:var(--panel); border:1px solid var(--line-soft); border-radius:16px;
+    padding:20px 20px 18px; transition:transform .15s, border-color .15s;
+  }
+  a.card:hover{transform:translateY(-3px); border-color:var(--hud)}
+  a.card.pad:hover{border-color:var(--accent-deep)}
+  a.card .emo{font-size:1.9rem}
+  a.card .nm{font-weight:800; font-size:1.08rem}
+  a.card .ds{color:var(--dim); font-size:.83rem; line-height:1.7}
+  a.card .go{margin-top:auto; padding-top:10px; font-family:var(--mono); font-size:.8rem; letter-spacing:.15em; color:var(--hud)}
+  a.card.pad .go{color:var(--accent)}
+  .foot{color:var(--faint); font-size:.75rem; margin-top:26px; line-height:1.8}
+  a.card:focus-visible{outline:2px solid var(--hud); outline-offset:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">DRONE SOCCER TRAINING GROUND</div>
+  <h1>無人機足球<span class="accent">・</span>十大術科訓練場</h1>
+  <p class="lead">依「無人機足球:10 大基礎術科操縱指南」設計的 3D 模擬飛行訓練遊戲。體育館場景中從起飛懸停到守門斷電共 10 關,支援追機/第一人稱/俯視/守門四種視角(V 鍵或畫面按鈕切換),選擇你的操作方式開始考照。</p>
+  <div class="cards">
+    <a class="card" href="keyboard.html">
+      <span class="emo">🚁⌨️</span>
+      <span class="nm">鍵盤/觸控版</span>
+      <span class="ds">電腦鍵盤(WASD+方向鍵)或平板虛擬搖桿操作。適合電腦教室與一般平板。</span>
+      <span class="go">開始訓練 →</span>
+    </a>
+    <a class="card pad" href="gamepad.html">
+      <span class="emo">🎮⚽</span>
+      <span class="nm">iPad + PS5 手把版</span>
+      <span class="ds">DualSense 藍牙連線,雙搖桿 Mode 2 配置,✕○□△ 按鍵操作,最接近真實遙控器手感。</span>
+      <span class="go">開始訓練 →</span>
+    </a>
+  </div>
+  <div class="kicker" style="margin-top:30px">TRAINING FILMS・教學錄影</div>
+  <div class="cards" style="margin-top:12px">
+    <a class="card" href="video-10drills.html">
+      <span class="emo">🎬⚽</span>
+      <span class="nm">十題流程拆解教學錄影</span>
+      <span class="ds">十大術科逐題動畫講解:口令、標準流程、評量標準。含字幕與中文語音旁白,可調語速、點章節跳題。</span>
+      <span class="go">開始觀看 →</span>
+    </a>
+    <a class="card pad" href="video-controller.html">
+      <span class="emo">🕹️📡</span>
+      <span class="nm">遙控器按鍵教學錄影</span>
+      <span class="ds">天穹足球無人機遙控器(美國手):雙搖桿、對頻、定高、緊急關閉、速度三段、燈色,含完整流程演練。</span>
+      <span class="go">開始觀看 →</span>
+    </a>
+  </div>
+  <div class="foot">
+    課程營隊教學用・成績與星等記錄在各裝置瀏覽器中,可於遊戲內「🏆 計分排行榜」匯出 CSV 與備份。<br>
+    兩個版本的功能相同(3D 視角、學員登記、10 關卡、星等評分、排行榜),差別只在操作方式。
+  </div>
+</div>
+</body>
+</html>

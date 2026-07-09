@@ -1,0 +1,670 @@
+﻿<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>無人機足球|十題流程拆解教學錄影</title>
+<style>
+:root{
+  --bg:#0b1220; --panel:#131c2e; --panel2:#0f1727; --line:#22304a;
+  --hud:#4fe3a3; --accent:#ff8a3c; --blue:#5aa7ff; --red:#ff5a6e;
+  --txt:#e8eef7; --dim:#8fa3bf; --gold:#ffd166;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--txt);
+  font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;
+  min-height:100vh; display:flex; flex-direction:column; align-items:center;
+  padding:14px 14px 40px;
+}
+.mono{font-family:Consolas,"SF Mono",monospace}
+.wrap{width:100%;max-width:980px}
+header.top{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:10px 4px 14px;
+}
+.rec{width:12px;height:12px;border-radius:50%;background:var(--red);
+  box-shadow:0 0 10px var(--red);animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+header.top h1{font-size:clamp(16px,2.6vw,22px);margin:0;letter-spacing:1px}
+header.top .sub{color:var(--dim);font-size:12px;letter-spacing:2px}
+.player{
+  background:var(--panel2);border:1px solid var(--line);border-radius:14px;
+  overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.45);
+}
+.stagebox{position:relative;background:radial-gradient(120% 100% at 50% 0%,#101c33 0%,#0a111f 70%);}
+.stage{display:block;width:100%;aspect-ratio:16/9;position:relative}
+.stage svg{display:block;width:100%;height:100%}
+.badge{
+  position:absolute;top:10px;left:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-width:70%;
+}
+.badge .part{
+  background:var(--accent);color:#20140a;font-weight:700;font-size:11px;
+  padding:3px 10px;border-radius:999px;letter-spacing:1px;
+}
+.badge .tname{
+  background:rgba(10,17,31,.8);border:1px solid var(--line);
+  padding:4px 12px;border-radius:999px;font-size:13px;font-weight:700;
+}
+.cmd{
+  position:absolute;top:10px;right:10px;max-width:46%;
+  background:rgba(79,227,163,.12);border:1px solid rgba(79,227,163,.4);
+  color:var(--hud);font-size:12px;padding:4px 10px;border-radius:8px;
+}
+.cmd b{color:#bfffe4}
+.sub-band{
+  position:absolute;left:0;right:0;bottom:0;padding:10px 16px 12px;text-align:center;
+  background:linear-gradient(transparent,rgba(5,9,17,.88) 40%);
+  pointer-events:none;
+}
+.subtitle{
+  display:inline-block;font-size:clamp(13px,2.4vw,19px);font-weight:700;
+  color:#fff;text-shadow:0 2px 6px #000;
+  background:rgba(9,14,25,.55);padding:4px 14px;border-radius:8px;
+  min-height:1.4em;
+}
+.bigplay{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(6,10,18,.55);cursor:pointer;border:0;width:100%;
+  flex-direction:column;gap:12px;color:var(--txt);
+}
+.bigplay .btn{
+  width:88px;height:88px;border-radius:50%;background:var(--hud);color:#06251a;
+  display:flex;align-items:center;justify-content:center;font-size:38px;
+  box-shadow:0 0 0 10px rgba(79,227,163,.18),0 8px 30px rgba(0,0,0,.5);
+}
+.bigplay p{margin:0;font-size:14px;color:var(--dim)}
+.bigplay.hide{display:none}
+.controls{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:var(--panel);border-top:1px solid var(--line);flex-wrap:wrap;
+}
+.cbtn{
+  background:#1b2740;border:1px solid var(--line);color:var(--txt);
+  border-radius:10px;font-size:17px;line-height:1;cursor:pointer;
+  padding:9px 14px;min-width:46px;
+}
+.cbtn:hover{background:#243350}
+.cbtn:focus-visible,.chip:focus-visible,.bigplay:focus-visible{outline:2px solid var(--hud);outline-offset:2px}
+.cbtn.play{background:var(--hud);color:#06251a;font-weight:700}
+.vsel{max-width:150px;font-size:12px;padding:8px 6px}
+.ratewrap{display:flex;align-items:center;gap:8px;background:#18233a;
+  border:1px solid var(--line);border-radius:10px;padding:6px 12px}
+.ratewrap span{font-size:12px;color:var(--dim);white-space:nowrap;
+  font-family:Consolas,monospace;min-width:74px}
+.ratewrap input{width:110px;accent-color:var(--hud)}
+.timeline{
+  flex:1;display:flex;gap:3px;height:14px;align-items:stretch;min-width:160px;cursor:pointer;
+}
+.seg{position:relative;background:#1c2942;border-radius:3px;overflow:hidden;flex-grow:1}
+.seg .fill{position:absolute;inset:0;width:0%;background:var(--hud)}
+.seg.done .fill{width:100%}
+.tdisp{font-size:12px;color:var(--dim);min-width:86px;text-align:right}
+.chips{
+  display:flex;gap:6px;overflow-x:auto;padding:10px 14px;background:var(--panel);
+  border-top:1px solid var(--line);
+}
+.chip{
+  flex:0 0 auto;background:#18233a;border:1px solid var(--line);color:var(--dim);
+  font-size:12px;padding:6px 11px;border-radius:999px;cursor:pointer;white-space:nowrap;
+}
+.chip .n{color:var(--accent);font-weight:700;margin-right:4px}
+.chip.cur{background:rgba(79,227,163,.15);border-color:var(--hud);color:#dffff0}
+.infogrid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;
+}
+@media(max-width:640px){.infogrid{grid-template-columns:1fr}}
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+}
+.card h3{
+  margin:0 0 10px;font-size:12px;letter-spacing:3px;color:var(--accent);
+}
+.card.crit h3{color:var(--hud)}
+.card ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.card li{font-size:14px;padding-left:22px;position:relative;color:#d7e1f0}
+.card.steps li::before{content:"▸";position:absolute;left:4px;color:var(--accent)}
+.card.crit li::before{content:"✓";position:absolute;left:2px;color:var(--hud);font-weight:700}
+footer{margin-top:22px;color:var(--dim);font-size:12px;text-align:center;line-height:1.8}
+.stage.paused svg *{animation-play-state:paused!important}
+
+/* ===== SVG common ===== */
+svg text{font-family:"Microsoft JhengHei",sans-serif}
+.lbl{fill:#9fb3cc;font-size:14px}
+.mlbl{fill:var(--hud);font-size:14px;font-family:Consolas,monospace}
+.rotor,.mv,.spinme{transform-box:fill-box;transform-origin:center}
+.rotor{animation:spin .45s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pulse-ring{transform-box:fill-box;transform-origin:center;animation:pring 2s ease-out infinite}
+@keyframes pring{0%{transform:scale(.55);opacity:.9}100%{transform:scale(1.25);opacity:0}}
+.floaty{animation:floaty 3.5s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+
+/* scene 1 takeoff */
+.s1mv{animation:s1 12s ease-in-out infinite}
+@keyframes s1{0%,9%{transform:translateY(0)}30%,100%{transform:translateY(-165px)}
+ 40%{transform:translateY(-171px)}55%{transform:translateY(-160px)}70%{transform:translateY(-168px)}85%{transform:translateY(-162px)}}
+.s1ring{animation:s1r 12s linear infinite}
+@keyframes s1r{0%,28%{opacity:0}36%,100%{opacity:1}}
+
+/* scene 2 yaw */
+.s2mv{animation:s2 14s linear infinite}
+@keyframes s2{0%,12%{transform:rotate(0deg)}18%,30%{transform:rotate(90deg)}
+ 36%,48%{transform:rotate(180deg)}54%,66%{transform:rotate(270deg)}72%,100%{transform:rotate(360deg)}}
+
+/* scene 3 pitch */
+.s3mv{animation:s3 12s ease-in-out infinite}
+@keyframes s3{0%,8%{transform:translateX(0)}38%,50%{transform:translateX(360px)}82%,100%{transform:translateX(0)}}
+
+/* scene 4 roll */
+.s4mv{animation:s4 12s ease-in-out infinite}
+@keyframes s4{0%,8%{transform:translateX(0)}30%,55%{transform:translateX(240px)}80%,100%{transform:translateX(0)}}
+
+/* scene 5 square: move + yaw at corners */
+.s5mv{animation:s5 16s linear infinite}
+@keyframes s5{
+ 0%,5%{transform:translate(0,0) rotate(0deg)}
+ 20%{transform:translate(0,-220px) rotate(0deg)}
+ 24%{transform:translate(0,-220px) rotate(90deg)}
+ 39%{transform:translate(220px,-220px) rotate(90deg)}
+ 43%{transform:translate(220px,-220px) rotate(180deg)}
+ 58%{transform:translate(220px,0) rotate(180deg)}
+ 62%{transform:translate(220px,0) rotate(270deg)}
+ 77%{transform:translate(0,0) rotate(270deg)}
+ 81%,100%{transform:translate(0,0) rotate(360deg)}}
+
+/* scene 6 sprint & brake */
+.s6mv{animation:s6 9s infinite}
+@keyframes s6{
+ 0%,8%{transform:translateX(0);opacity:1}
+ 45%{transform:translateX(492px)}
+ 52%,88%{transform:translateX(478px);opacity:1}
+ 93%{transform:translateX(478px);opacity:0}
+ 96%{transform:translateX(0);opacity:0}
+ 100%{transform:translateX(0);opacity:1}}
+.s6tilt{animation:s6t 9s infinite;transform-box:fill-box;transform-origin:center}
+@keyframes s6t{0%,8%{transform:rotate(0deg)}20%,40%{transform:rotate(-16deg)}
+ 47%{transform:rotate(18deg)}54%,100%{transform:rotate(0deg)}}
+.s6dash{animation:s6d 9s infinite}
+@keyframes s6d{0%,10%{opacity:0}20%,42%{opacity:.8}50%,100%{opacity:0}}
+
+/* scene 8 five-point landing */
+.s8mv{animation:s8 15s ease-in-out infinite}
+@keyframes s8{
+ 0%,8%{transform:translate(0,0) scale(1)}
+ 10%{transform:translate(0,0) scale(.85)}
+ 13%{transform:translate(0,0) scale(1)}
+ 24%,28%{transform:translate(160px,75px) scale(1)}
+ 30%{transform:translate(160px,75px) scale(.85)}
+ 33%{transform:translate(160px,75px) scale(1)}
+ 44%,48%{transform:translate(105px,240px) scale(1)}
+ 50%{transform:translate(105px,240px) scale(.85)}
+ 53%{transform:translate(105px,240px) scale(1)}
+ 64%,68%{transform:translate(-105px,240px) scale(1)}
+ 70%{transform:translate(-105px,240px) scale(.85)}
+ 73%{transform:translate(-105px,240px) scale(1)}
+ 84%,88%{transform:translate(-160px,75px) scale(1)}
+ 90%{transform:translate(-160px,75px) scale(.85)}
+ 94%,100%{transform:translate(-160px,75px) scale(1)}}
+
+/* scene 9 goalkeeper */
+.s9mv{animation:s9 12s ease-in-out infinite}
+@keyframes s9{
+ 0%,4%{transform:translateY(0)}
+ 14%,20%{transform:translateY(-210px)}
+ 30%,36%{transform:translateY(0)}
+ 46%,52%{transform:translateY(-210px)}
+ 62%,68%{transform:translateY(0)}
+ 78%,84%{transform:translateY(-210px)}
+ 94%,100%{transform:translateY(0)}}
+
+/* scene 10 emergency */
+.s10mv{animation:s10 10s ease-in infinite}
+@keyframes s10{0%,12%{transform:translateY(0)}42%,100%{transform:translateY(228px)}}
+.s10off{animation:s10o 10s infinite}
+@keyframes s10o{0%,44%{opacity:0}50%,58%{opacity:1}60%{opacity:.2}64%,100%{opacity:1}}
+.s10rotor{animation:s10r 10s infinite}
+@keyframes s10r{0%,44%{opacity:1}48%,100%{opacity:0}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="rec" aria-hidden="true"></span>
+    <div>
+      <h1>無人機足球|基礎術科操作 10 題・流程拆解教學錄影</h1>
+      <div class="sub mono">STAGE 1 — SKILL TEST GUIDE ⚽ TRAINING FILM</div>
+    </div>
+  </header>
+
+  <div class="player">
+    <div class="stagebox">
+      <div class="stage" id="stage"></div>
+      <div class="badge"><span class="part" id="part"></span><span class="tname" id="tname"></span></div>
+      <div class="cmd" id="cmd"></div>
+      <div class="sub-band"><span class="subtitle" id="subtitle"></span></div>
+      <button class="bigplay" id="bigplay">
+        <span class="btn">▶</span>
+        <p>點一下開始播放(含中文語音旁白,可用 🔊 關閉)</p>
+      </button>
+    </div>
+    <div class="controls">
+      <button class="cbtn" id="prev" title="上一題">⏮</button>
+      <button class="cbtn play" id="playbtn" title="播放/暫停">▶</button>
+      <button class="cbtn" id="next" title="下一題">⏭</button>
+      <div class="timeline" id="timeline" title="點選跳到該段"></div>
+      <span class="tdisp mono" id="tdisp">0:00 / 0:00</span>
+      <button class="cbtn" id="voicebtn" title="語音旁白開/關">🔊</button>
+      <select class="cbtn vsel" id="voicesel" title="旁白聲音"></select>
+      <div class="ratewrap" title="語速調整">
+        <span id="ratelab">語速 0.9x</span>
+        <input type="range" id="rate" min="0.6" max="1.3" step="0.05" value="0.9" aria-label="語速">
+      </div>
+    </div>
+    <nav class="chips" id="chips" aria-label="章節"></nav>
+  </div>
+
+  <div class="infogrid">
+    <div class="card steps"><h3>標準流程</h3><ul id="steps"></ul></div>
+    <div class="card crit"><h3>評量標準</h3><ul id="crit"></ul></div>
+  </div>
+
+  <footer>
+    ⚽ 第一階段.基礎技能檢定|穩定・精準・流暢|安全・責任・團隊合作<br>
+    語音旁白使用裝置內建語音(iPad 請開啟音量);控制列可選旁白聲音、拉動滑桿調整語速;點章節可直接跳題複習。
+  </footer>
+</div>
+
+<script>
+/* ---------- SVG building blocks ---------- */
+const GRID = `<defs><pattern id="g" width="50" height="50" patternUnits="userSpaceOnUse">
+  <path d="M50,0 H0 V50" fill="none" stroke="rgba(79,227,163,.08)"/></pattern></defs>
+  <rect width="800" height="450" fill="url(#g)"/>`;
+const GROUND = `<line x1="0" y1="400" x2="800" y2="400" stroke="#33465f" stroke-width="3"/>
+  <g stroke="#22304a" stroke-width="2">${Array.from({length:20},(_,i)=>`<line x1="${i*42}" y1="400" x2="${i*42-14}" y2="414"/>`).join('')}</g>`;
+
+function droneTop(color, extraCls=''){
+  return `<g class="${extraCls}">
+    <circle r="36" fill="rgba(90,167,255,.10)" stroke="${color}" stroke-width="2.5"/>
+    <circle r="36" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="4 7" opacity=".6"/>
+    <line x1="-22" y1="-22" x2="22" y2="22" stroke="#9fb3cc" stroke-width="3.5"/>
+    <line x1="-22" y1="22" x2="22" y2="-22" stroke="#9fb3cc" stroke-width="3.5"/>
+    ${[[-22,-22],[22,-22],[-22,22],[22,22]].map(([x,y])=>
+      `<g transform="translate(${x},${y})"><g class="rotor"><ellipse rx="13" ry="4.5" fill="rgba(255,255,255,.4)"/></g></g>`).join('')}
+    <circle r="10" fill="${color}"/>
+    <polygon points="0,-34 8,-19 -8,-19" fill="var(--accent)"/>
+  </g>`;
+}
+function droneSide(color, rotorCls=''){
+  return `<g>
+    <circle r="30" fill="rgba(90,167,255,.10)" stroke="${color}" stroke-width="2.5"/>
+    <circle r="30" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="4 7" opacity=".6"/>
+    <line x1="-20" y1="7" x2="20" y2="7" stroke="#9fb3cc" stroke-width="4"/>
+    <rect x="-7" y="-1" width="14" height="9" rx="2.5" fill="${color}"/>
+    <line x1="-14" y1="7" x2="-14" y2="-4" stroke="#9fb3cc" stroke-width="2.5"/>
+    <line x1="14" y1="7" x2="14" y2="-4" stroke="#9fb3cc" stroke-width="2.5"/>
+    <g transform="translate(-14,-6)"><g class="rotor ${rotorCls}"><ellipse rx="11" ry="3.5" fill="rgba(255,255,255,.4)"/></g></g>
+    <g transform="translate(14,-6)"><g class="rotor ${rotorCls}"><ellipse rx="11" ry="3.5" fill="rgba(255,255,255,.4)"/></g></g>
+  </g>`;
+}
+const PAD = (x,y,c='#2b3d5c')=>`<g transform="translate(${x},${y})">
+  <ellipse rx="58" ry="15" fill="${c}" stroke="#44608c" stroke-width="2"/>
+  <ellipse rx="30" ry="8" fill="none" stroke="#5f7ba8" stroke-width="2"/>
+  <line x1="0" y1="-6" x2="0" y2="6" stroke="#8fa3bf" stroke-width="2"/></g>`;
+
+/* ---------- scenes ---------- */
+const S = [];
+
+S.push({ label:'序', part:'開場', name:'第一階段.基礎技能檢定', cmd:'共 10 題.五大部分', dur:16,
+  lines:[[0,'歡迎來到無人機足球訓練場!'],[3,'第一階段:基礎術科操作,共有 10 題'],
+    [6.5,'分成五大部分:起飛定點、平面位移、'],[10,'航路操控、進階協調、足球專項應用'],
+    [13.5,'跟著影片,一題一題練紮實!']],
+  steps:['第一部分|起飛與定點控制(第 1–2 題)','第二部分|平面位移控制(第 3–4 題)','第三部分|航路操控.模擬考照(第 5–6 題)','第四部分|進階協調控制(第 7–8 題)','第五部分|足球專項應用(第 9–10 題)'],
+  crit:['飛行前檢查設備與電量','保持安全距離,注意周遭環境','遵守操作規範,確保人機安全'],
+  stage:`<svg viewBox="0 0 800 450">${GRID}
+    <text x="400" y="120" text-anchor="middle" fill="#fff" font-size="34" font-weight="700">無人機足球</text>
+    <text x="400" y="158" text-anchor="middle" fill="var(--accent)" font-size="20" font-weight="700">基礎術科操作 10 題.流程拆解</text>
+    <g transform="translate(250,280)"><g class="floaty">${droneTop('var(--blue)')}</g></g>
+    <g transform="translate(550,280)"><g class="floaty" style="animation-delay:-1.7s">${droneTop('var(--red)')}</g></g>
+    <g transform="translate(400,300)">
+      <circle r="26" fill="#fff"/>
+      <path d="M0,-26 L8,-12 L24,-10 L13,2 L16,20 L0,12 L-16,20 L-13,2 L-24,-10 L-8,-12 Z" fill="#0b1220" transform="scale(.62)"/>
+      <circle r="26" fill="none" stroke="#9fb3cc" stroke-width="2"/>
+    </g>
+    <text x="400" y="400" text-anchor="middle" class="lbl">▶ 按播放開始|點下方章節可跳題</text>
+  </svg>`});
+
+S.push({ label:'1 起飛懸停', part:'第一部分', name:'❶ 起飛與定點懸停 Take-off & Hovering',
+  cmd:'口令:<b>預備—解鎖—起飛—上升至眼睛高度—停</b>', dur:22,
+  lines:[[0,'第 1 題:起飛與定點懸停'],[3,'口令:預備——解鎖——起飛——上升至眼睛高度——停'],
+    [8,'無人機置於起飛墊中心,解鎖後緩推油門'],[12.5,'上升到約 1.2 公尺,保持懸停'],
+    [16,'評量:半徑 50 公分內、懸停 10 秒以上、高度穩定']],
+  steps:['無人機置於起飛墊中心','解鎖(Arming)','緩推油門,升至約 1.2 m','維持懸停'],
+  crit:['定點範圍:半徑 ≤ 50cm','持續時間:≥ 10 秒','高度穩定,無明顯飄移'],
+  stage:`<svg viewBox="0 0 800 450">${GRID}${GROUND}
+    ${PAD(400,398)}
+    <line x1="180" y1="203" x2="620" y2="203" stroke="var(--hud)" stroke-width="1.5" stroke-dasharray="8 8" opacity=".7"/>
+    <text x="632" y="208" class="mlbl">1.2 m</text>
+    <line x1="230" y1="203" x2="230" y2="392" stroke="#44608c" stroke-width="1.5" stroke-dasharray="3 6"/>
+    <g class="s1ring"><circle cx="400" cy="203" r="62" fill="none" stroke="var(--hud)" stroke-width="1.5" stroke-dasharray="5 6" opacity=".8"/>
+      <text x="400" y="130" text-anchor="middle" class="mlbl" font-size="12">半徑 ≤ 50cm</text></g>
+    <g transform="translate(400,368)"><g class="mv s1mv">${droneSide('var(--blue)')}</g></g>
+    <text x="400" y="440" text-anchor="middle" class="lbl">緩推油門 ↑ 升至眼睛高度後定點懸停 10 秒</text>
+  </svg>`});
+
+S.push({ label:'2 四方位旋轉', part:'第一部分', name:'❷ 四方位旋轉 Yaw Control',
+  cmd:'口令:<b>右轉—停—右轉—停</b>(每 90° 停)', dur:21,
+  lines:[[0,'第 2 題:四方位旋轉'],[3,'口令:右轉——停——右轉——停,每 90 度停一次'],
+    [7.5,'懸停狀態下,每次旋轉 90 度'],[11,'依序:前、右、後、左,再回到前'],
+    [15,'每個方位停 3 秒,高度誤差 20 公分內,不可漂移']],
+  steps:['懸停狀態下執行旋轉','每次旋轉 90°','機頭方向依序:前 → 右 → 後 → 左 → 前'],
+  crit:['每個方位停留 ≥ 3 秒','高度誤差 ≤ 20cm','無水平漂移'],
+  stage:`<svg viewBox="0 0 800 450">${GRID}
+    <circle cx="400" cy="225" r="130" fill="none" stroke="#33465f" stroke-width="1.5" stroke-dasharray="4 8"/>
+    <text x="400" y="66" text-anchor="middle" class="lbl" font-size="18" fill="var(--accent)">前</text>
+    <text x="560" y="231" class="lbl" font-size="18">右</text>
+    <text x="400" y="404" text-anchor="middle" class="lbl" font-size="18">後</text>
+    <text x="222" y="231" text-anchor="end" class="lbl" font-size="18">左</text>
+    <path d="M480,90 A160,160 0 0 1 550,150" fill="none" stroke="var(--hud)" stroke-width="2.5" marker-end="url(#arr)"/>
+    <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="var(--hud)"/></marker></defs>
+    <g transform="translate(400,225)"><g class="mv s2mv">${droneTop('var(--blue)')}</g></g>
+    <text x="400" y="440" text-anchor="middle" class="lbl">機頭(橘色標記)每次右轉 90°,每個方位停 3 秒</text>
+  </svg>`});
+
+S.push({ label:'3 前後移動', part:'第二部分', name:'❸ 前後移動 Pitch Control',
+  cmd:'口令:<b>前進—停—後退—停</b>', dur:17,
+  lines:[[0,'第 3 題:前後移動(Pitch)'],[3,'口令:前進——停——後退——停'],
+    [6.5,'機頭固定朝前,往前約 3 公尺'],[10,'再沿原路退回起點'],
+    [12.5,'評量:航跡接近直線,誤差 50 公分內']],
+  steps:['機頭固定朝前','前進約 3 m','原路後退回起點'],
+  crit:['航跡需接近直線','不可左右偏移','起點誤差 ≤ 50cm'],
+  stage:`<svg viewBox="0 0 800 450">${GRID}
+    <line x1="220" y1="225" x2="580" y2="225" stroke="#33465f" stroke-width="2" stroke-dasharray="6 8"/>
+    <line x1="220" y1="200" x2="220" y2="250" stroke="var(--hud)" stroke-width="2"/>
+    <line x1="580" y1="200" x2="580" y2="250" stroke="var(--hud)" stroke-width="2"/>
+    <text x="400" y="278" text-anchor="middle" class="mlbl">3 m</text>
+    <text x="220" y="182" text-anchor="middle" class="lbl" font-size="12">起點</text>
+    <g transform="translate(220,225)"><g class="mv s3mv">${droneTop('var(--blue)').replace('points="0,-34 8,-19 -8,-19"','points="34,0 19,8 19,-8"')}</g></g>
+    <text x="400" y="120" text-anchor="middle" class="lbl">機頭固定朝前 → 前進 3 m ← 原路退回</text>
+    <text x="400" y="440" text-anchor="middle" class="lbl">航跡貼緊直線,不可左右偏移</text>
+  </svg>`});
+
+S.push({ label:'4 左右側飛', part:'第二部分', name:'❹ 左右側飛 Roll Control',
+  cmd:'口令:<b>右移—停—左移—停</b>', dur:19,
+  lines:[[0,'第 4 題:左右側飛(Roll)'],[3,'口令:右移——停——左移——停'],
+    [6.5,'機頭保持朝前,右移 2 公尺,停 3 秒,左移回原點'],
+    [11.5,'教學重點:機頭方向 ≠ 移動方向!'],[15,'評量:側移軌跡平行,無前後漂移']],
+  steps:['機頭維持朝前','右移約 2 m → 停 3 秒 → 左移回原點'],
+  crit:['側移軌跡平行','無前後漂移','克服「機頭方向 ≠ 移動方向」'],
+  stage:`<svg viewBox="0 0 800 450">${GRID}
+    <line x1="280" y1="245" x2="640" y2="245" stroke="#33465f" stroke-width="2" stroke-dasharray="6 8"/>
+    <text x="400" y="292" text-anchor="middle" class="mlbl">2 m →</text>
+    <g transform="translate(280,245)"><g class="mv s4mv">${droneTop('var(--blue)')}</g></g>
+    <rect x="235" y="70" width="330" height="34" rx="8" fill="rgba(255,138,60,.14)" stroke="rgba(255,138,60,.5)"/>
+    <text x="400" y="93" text-anchor="middle" fill="var(--accent)" font-size="15" font-weight="700">機頭方向 ≠ 移動方向</text>
+    <text x="400" y="150" text-anchor="middle" class="lbl">機頭一直朝「前」(上),機身向右平移</text>
+    <text x="400" y="440" text-anchor="middle" class="lbl">右移 2m → 停 3 秒 → 左移回原點</text>
+  </svg>`});
+
+S.push({ label:'5 正方形航路', part:'第三部分', name:'❺ 正方形航路 Square Path',
+  cmd:'口令:<b>前進—右轉</b>(×4)', dur:20,
+  lines:[[0,'第 5 題:正方形航路(模擬考照)'],[3.5,'口令:前進——右轉,重複四次'],
+    [7,'飛出 2×2 公尺正方形,每個轉角先停頓再轉向'],
+    [12,'四邊長度一致,回到起點上方'],[15.5,'轉角要清晰,不可畫成圓弧']],
+  steps:['飛行 2m × 2m 正方形','每個轉角需「停頓 + 轉向」'],
+  crit:['四邊長度一致','必須回到起點上方','轉角清晰(不可圓弧)'],
+  stage:`<svg viewBox="0 0 800 450">${GRID}
+    <rect x="290" y="110" width="220" height="220" fill="none" stroke="#7a5cff" stroke-width="2" stroke-dasharray="8 8"/>
+    <text x="400" y="360" text-anchor="middle" class="mlbl" fill="#b39dff">2 m</text>
+    <text x="540" y="225" class="mlbl" fill="#b39dff">2 m</text>
+    ${[[290,330],[290,110],[510,110],[510,330]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="6" fill="#7a5cff"/>`).join('')}
+    <g transform="translate(290,330)"><g class="mv s5mv">${droneTop('var(--blue)')}</g></g>
+    <text x="400" y="440" text-anchor="middle" class="lbl">每個角:停頓 → 右轉 90° → 再前進|回到起點上方</text>
+  </svg>`});
+
+S.push({ label:'6 加速急停', part:'第三部分', name:'❻ 直線加速與急停 Sprint & Brake',
+  cmd:'口令:<b>全速前進—急停</b>', dur:17,
+  lines:[[0,'第 6 題:直線加速與急停'],[3,'口令:全速前進——急停!'],
+    [6,'全速前進約 5 公尺,接近標線前反向推桿煞車'],
+    [11,'停止位置不得越線,急停穩定不翻滾']],
+  steps:['前進約 5 m','接近標線前執行反向推桿煞車'],
+  crit:['停止位置不得越線','急停過程穩定,無翻滾'],
+  stage:`<svg viewBox="0 0 800 450">${GRID}${GROUND}
+    <line x1="660" y1="150" x2="660" y2="400" stroke="var(--red)" stroke-width="4"/>
+    <text x="672" y="175" fill="var(--red)" font-size="14" font-weight="700">停止線</text>
+    <line x1="120" y1="330" x2="640" y2="330" stroke="#33465f" stroke-width="1.5" stroke-dasharray="4 8"/>
+    <text x="390" y="360" text-anchor="middle" class="mlbl">5 m</text>
+    <g class="s6dash" stroke="var(--hud)" stroke-width="3" opacity="0">
+      <line x1="150" y1="285" x2="205" y2="285"/><line x1="140" y1="305" x2="215" y2="305"/><line x1="155" y1="325" x2="200" y2="325"/>
+    </g>
+    <g transform="translate(140,300)"><g class="mv s6mv"><g class="s6tilt">${droneSide('var(--blue)')}</g></g></g>
+    <text x="400" y="440" text-anchor="middle" class="lbl">全速前進 → 標線前「反向推桿」煞車 → 線前停穩</text>
+  </svg>`});
+
+S.push({ label:'7 8字飛行', part:'第四部分', name:'❼ 8 字飛行 Figure-8',
+  cmd:'口令:<b>畫 8 字—保持高度</b>', dur:17,
+  lines:[[0,'第 7 題:8 字飛行(Figure-8)'],[3,'口令:畫 8 字——保持高度'],
+    [6,'飛出連續「∞」軌跡,同步協調旋轉與側移'],
+    [10.5,'路徑連續流暢,交會點高度穩定,不停頓不失控']],
+  steps:['飛出連續「∞」軌跡','同步控制:旋轉(Yaw)+ 側移(Roll)'],
+  crit:['路徑連續流暢','中央交會點高度穩定','無停頓或失控'],
+  stage:`<svg viewBox="0 0 800 450">${GRID}
+    <path d="M400,225 C520,95 670,95 670,225 C670,355 520,355 400,225 C280,95 130,95 130,225 C130,355 280,355 400,225"
+      fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="9 9" opacity=".8"/>
+    <g transform="translate(535,225)"><circle r="9" fill="var(--accent)"/><circle class="pulse-ring" r="16" fill="none" stroke="var(--accent)" stroke-width="2"/></g>
+    <g transform="translate(265,225)"><circle r="9" fill="var(--accent)"/><circle class="pulse-ring" r="16" fill="none" stroke="var(--accent)" stroke-width="2"/></g>
+    <g><g>${droneTop('var(--blue)')}</g>
+      <animateMotion dur="9s" repeatCount="indefinite"
+        path="M400,225 C520,95 670,95 670,225 C670,355 520,355 400,225 C280,95 130,95 130,225 C130,355 280,355 400,225"/></g>
+    <text x="400" y="440" text-anchor="middle" class="lbl">連續「∞」軌跡|Yaw + Roll 同步協調,交會點保持高度</text>
+  </svg>`});
+
+S.push({ label:'8 五點降落', part:'第四部分', name:'❽ 五點精準降落 Precision Landing',
+  cmd:'口令:<b>指定位置—降落</b>', dur:17,
+  lines:[[0,'第 8 題:五點精準降落'],[3,'口令:指定位置——降落'],
+    [6,'依序降落在梅花型的五個指定點'],
+    [10,'起落架完全落在區域內,無偏移、不彈跳']],
+  steps:['依序降落於五個指定點(梅花型)','可使用顏色或編號指示'],
+  crit:['起落架完全落於區域內','無偏移或彈跳'],
+  stage:`<svg viewBox="0 0 800 450">${GRID}
+    <circle cx="400" cy="235" r="34" fill="rgba(122,92,255,.25)" stroke="#7a5cff" stroke-width="2"/>
+    ${[[400,110,'1','#ff5a6e'],[560,185,'2','#5aa7ff'],[505,350,'3','#ffd166'],[295,350,'4','#4fe3a3'],[240,185,'5','#5aa7ff']]
+      .map(([x,y,n,c])=>`<g transform="translate(${x},${y})">
+        <circle r="34" fill="rgba(255,255,255,.05)" stroke="${c}" stroke-width="2.5"/>
+        <text y="7" text-anchor="middle" fill="${c}" font-size="20" font-weight="700" font-family="Consolas">${n}</text></g>`).join('')}
+    <g transform="translate(400,110)"><g class="mv s8mv">${droneTop('var(--blue)')}</g></g>
+    <text x="400" y="440" text-anchor="middle" class="lbl">1 → 2 → 3 → 4 → 5 依序精準起降,不可壓線</text>
+  </svg>`});
+
+S.push({ label:'9 守門升降', part:'第五部分', name:'❾ 守門員升降 Goalkeeper Drill',
+  cmd:'口令:<b>升—降—升—降</b>', dur:17,
+  lines:[[0,'第 9 題:守門員升降'],[3,'口令:升——降——升——降'],
+    [6,'在 0.5 到 2 公尺之間上下移動,重複 3 次'],
+    [10.5,'垂直軌跡穩定,不可左右晃動']],
+  steps:['在 0.5m ⇄ 2m 間上下移動','重複 3 次'],
+  crit:['垂直軌跡穩定','無左右晃動'],
+  stage:`<svg viewBox="0 0 800 450">${GRID}${GROUND}
+    <g stroke="#44608c" stroke-width="2.5" fill="none">
+      <path d="M120,400 V170 H320 V400"/>
+      ${Array.from({length:6},(_,i)=>`<line x1="${140+i*32}" y1="170" x2="${140+i*32}" y2="400"/>`).join('')}
+      ${Array.from({length:5},(_,i)=>`<line x1="120" y1="${205+i*40}" x2="320" y2="${205+i*40}"/>`).join('')}
+    </g>
+    <circle cx="255" cy="382" r="16" fill="#fff"/><circle cx="255" cy="382" r="16" fill="none" stroke="#9fb3cc" stroke-width="2"/>
+    <line x1="430" y1="330" x2="700" y2="330" stroke="var(--hud)" stroke-width="1.5" stroke-dasharray="7 7"/>
+    <text x="712" y="335" class="mlbl">0.5 m</text>
+    <line x1="430" y1="120" x2="700" y2="120" stroke="var(--hud)" stroke-width="1.5" stroke-dasharray="7 7"/>
+    <text x="712" y="125" class="mlbl">2 m</text>
+    <text x="560" y="70" text-anchor="middle" fill="var(--accent)" font-size="16" font-weight="700">升降 × 3 次</text>
+    <g transform="translate(560,330)"><g class="mv s9mv">${droneSide('var(--blue)')}</g></g>
+    <text x="400" y="440" text-anchor="middle" class="lbl">守住球門!0.5m ⇄ 2m 垂直升降,左右不晃動</text>
+  </svg>`});
+
+S.push({ label:'10 緊急斷電', part:'第五部分', name:'❿ 緊急降落與斷電 Emergency Cut-off',
+  cmd:'口令:<b>危險—降落—斷電</b>', dur:19,
+  lines:[[0,'第 10 題:緊急降落與斷電'],[3,'口令:危險——降落——斷電!'],
+    [6,'快速穩定下降,接地後立即 Disarm 斷電'],
+    [10.5,'落地後 1 秒內完成斷電,過程不可翻覆'],
+    [14,'這是保護自己與隊友的關鍵動作!']],
+  steps:['快速穩定下降','接地後立即 Disarm(斷電)'],
+  crit:['落地後 1 秒內完成斷電','過程不可翻覆或側倒'],
+  stage:`<svg viewBox="0 0 800 450">${GRID}${GROUND}
+    ${PAD(400,398)}
+    <g transform="translate(400,140)"><g class="mv s10mv">
+      <g><circle r="30" fill="rgba(255,90,110,.12)" stroke="var(--red)" stroke-width="2.5"/>
+      <circle r="30" fill="none" stroke="var(--red)" stroke-width="1" stroke-dasharray="4 7" opacity=".6"/>
+      <line x1="-20" y1="7" x2="20" y2="7" stroke="#9fb3cc" stroke-width="4"/>
+      <rect x="-7" y="-1" width="14" height="9" rx="2.5" fill="var(--red)"/>
+      <g transform="translate(-14,-6)" class="s10rotor"><g class="rotor"><ellipse rx="11" ry="3.5" fill="rgba(255,255,255,.4)"/></g></g>
+      <g transform="translate(14,-6)" class="s10rotor"><g class="rotor"><ellipse rx="11" ry="3.5" fill="rgba(255,255,255,.4)"/></g></g></g>
+    </g></g>
+    <line x1="400" y1="170" x2="400" y2="350" stroke="var(--red)" stroke-width="2.5" stroke-dasharray="6 6" marker-end="url(#arrR)"/>
+    <defs><marker id="arrR" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="var(--red)"/></marker></defs>
+    <g class="s10off">
+      <rect x="560" y="220" width="150" height="88" rx="12" fill="rgba(255,90,110,.12)" stroke="var(--red)" stroke-width="2"/>
+      <rect x="613" y="238" width="44" height="34" rx="7" fill="none" stroke="var(--red)" stroke-width="4"/>
+      <path d="M622,238 v-9 a13,13 0 0 1 26,0 v9" fill="none" stroke="var(--red)" stroke-width="4"/>
+      <text x="635" y="296" text-anchor="middle" fill="var(--red)" font-size="17" font-weight="700" font-family="Consolas">OFF</text>
+    </g>
+    <text x="400" y="440" text-anchor="middle" class="lbl">快速下降 → 接地 → 1 秒內 Disarm 斷電</text>
+  </svg>`});
+
+S.push({ label:'結', part:'結語', name:'檢定重點與目標', cmd:'穩定・精準・流暢', dur:18,
+  lines:[[0,'安全提醒:飛行前檢查設備與電量'],[4,'保持安全距離,注意周遭環境,遵守操作規範'],
+    [8.5,'檢定重點:穩定、精準、流暢'],[12,'目標:成為一名優秀的無人機足球選手!']],
+  steps:['複習口訣:每題先唸口令,再打桿','過關條件不熟的題目,點上方章節重看'],
+  crit:['穩定・精準・流暢','安全・責任・團隊合作','成為優秀的無人機足球選手!'],
+  stage:`<svg viewBox="0 0 800 450">${GRID}
+    <text x="400" y="130" text-anchor="middle" fill="var(--gold)" font-size="26" font-weight="700">🏆 檢定重點</text>
+    <text x="400" y="180" text-anchor="middle" fill="#fff" font-size="20">穩定・精準・流暢</text>
+    <text x="400" y="215" text-anchor="middle" fill="var(--dim)" font-size="16">安全・責任・團隊合作</text>
+    <g transform="translate(400,310)"><g class="floaty">${droneTop('var(--blue)')}</g></g>
+    <text x="400" y="410" text-anchor="middle" fill="var(--hud)" font-size="18" font-weight="700">目標:成為一名優秀的無人機足球選手!⚽</text>
+  </svg>`});
+
+/* ---------- player engine ---------- */
+const stage=document.getElementById('stage'), subtitle=document.getElementById('subtitle'),
+  partEl=document.getElementById('part'), tnameEl=document.getElementById('tname'),
+  cmdEl=document.getElementById('cmd'), stepsEl=document.getElementById('steps'),
+  critEl=document.getElementById('crit'), chipsEl=document.getElementById('chips'),
+  tlEl=document.getElementById('timeline'), tdisp=document.getElementById('tdisp'),
+  playbtn=document.getElementById('playbtn'), bigplay=document.getElementById('bigplay'),
+  voicebtn=document.getElementById('voicebtn');
+
+let idx=0,t=0,lineIdx=-1,playing=false,voice=true,started=false,raf=null,last=0;
+let rate=parseFloat(localStorage.getItem('droneVidRate')||'0.9');
+let voiceName=localStorage.getItem('droneVidVoice')||'';
+const total=S.reduce((a,s)=>a+s.dur,0);
+
+S.forEach((s,i)=>{
+  const c=document.createElement('button');c.className='chip';
+  c.innerHTML=/^\d/.test(s.label)?`<span class="n">${s.label.split(' ')[0]}</span>${s.label.split(' ').slice(1).join(' ')}`:s.label;
+  c.onclick=()=>{jump(i);};chipsEl.appendChild(c);
+  const seg=document.createElement('div');seg.className='seg';seg.style.flexGrow=s.dur;
+  seg.innerHTML='<div class="fill"></div>';seg.onclick=()=>jump(i);tlEl.appendChild(seg);
+});
+const chips=[...chipsEl.children], segs=[...tlEl.children];
+
+function fmt(x){x=Math.max(0,Math.round(x));return Math.floor(x/60)+':'+String(x%60).padStart(2,'0')}
+function zhVoice(){const v=speechSynthesis.getVoices();
+  return v.find(x=>/zh[-_]TW/i.test(x.lang))||v.find(x=>/^zh/i.test(x.lang))||null}
+function speak(txt){
+  if(!voice||!('speechSynthesis' in window))return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(txt.replace(/[——]/g,',').replace(/[⚽!!]/g,'。'));
+  const vs=speechSynthesis.getVoices();
+  const v=vs.find(x=>x.name===voiceName)||zhVoice();
+  if(v)u.voice=v; u.lang='zh-TW'; u.rate=rate;
+  speechSynthesis.speak(u);
+}
+function setPausedVisual(p){
+  stage.classList.toggle('paused',p);
+  stage.querySelectorAll('svg').forEach(sv=>{try{p?sv.pauseAnimations():sv.unpauseAnimations()}catch(e){}});
+}
+function enter(i){
+  idx=i;t=0;lineIdx=-1;const s=S[i];
+  stage.innerHTML=s.stage;
+  partEl.textContent=s.part;tnameEl.textContent=s.name;cmdEl.innerHTML=s.cmd;
+  stepsEl.innerHTML=s.steps.map(x=>`<li>${x}</li>`).join('');
+  critEl.innerHTML=s.crit.map(x=>`<li>${x}</li>`).join('');
+  subtitle.textContent='';
+  chips.forEach((c,k)=>c.classList.toggle('cur',k===i));
+  chips[i].scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
+  segs.forEach((sg,k)=>{sg.classList.toggle('done',k<i);if(k>=i)sg.querySelector('.fill').style.width=k===i?'0%':'0%'});
+  if('speechSynthesis' in window)speechSynthesis.cancel();
+  if(!playing)setPausedVisual(true);
+}
+function jump(i){enter(i);if(!started){started=true;bigplay.classList.add('hide')}if(!playing)togglePlay(true);}
+function updateHUD(){
+  const s=S[idx];
+  let li=-1;for(let k=0;k<s.lines.length;k++)if(t>=s.lines[k][0])li=k;
+  if(li!==lineIdx){lineIdx=li;const txt=li>=0?s.lines[li][1]:'';subtitle.textContent=txt;if(txt)speak(txt);}
+  segs[idx].querySelector('.fill').style.width=Math.min(100,t/s.dur*100)+'%';
+  const el=S.slice(0,idx).reduce((a,x)=>a+x.dur,0)+t;
+  tdisp.textContent=fmt(el)+' / '+fmt(total);
+}
+function loop(ts){
+  if(!playing)return;
+  const dt=Math.min(.1,(ts-last)/1000);last=ts;
+  t+=dt*(voice?rate/1.05:1); /* 語速慢,影片節奏跟著放慢 */
+  if(t>=S[idx].dur){
+    if(idx<S.length-1){enter(idx+1);}
+    else{togglePlay(false);t=S[idx].dur;updateHUD();return;}
+  }
+  updateHUD();raf=requestAnimationFrame(loop);
+}
+function togglePlay(force){
+  const want=typeof force==='boolean'?force:!playing;
+  if(want===playing)return;
+  playing=want;
+  playbtn.textContent=playing?'⏸':'▶';
+  setPausedVisual(!playing);
+  if(playing){
+    if('speechSynthesis' in window){try{speechSynthesis.resume()}catch(e){}}
+    last=performance.now();raf=requestAnimationFrame(loop);
+  }else{
+    cancelAnimationFrame(raf);
+    if('speechSynthesis' in window){try{speechSynthesis.pause()}catch(e){}}
+  }
+}
+bigplay.onclick=()=>{
+  started=true;bigplay.classList.add('hide');
+  if('speechSynthesis' in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(' '));}
+  togglePlay(true);
+};
+playbtn.onclick=()=>{if(!started){bigplay.onclick();return}togglePlay();};
+document.getElementById('prev').onclick=()=>jump(Math.max(0,idx-1));
+document.getElementById('next').onclick=()=>jump(Math.min(S.length-1,idx+1));
+voicebtn.onclick=()=>{voice=!voice;voicebtn.textContent=voice?'🔊':'🔇';
+  if(!voice&&'speechSynthesis' in window)speechSynthesis.cancel();};
+const rateEl=document.getElementById('rate'),ratelab=document.getElementById('ratelab'),
+  vsel=document.getElementById('voicesel');
+function showRate(){ratelab.textContent='語速 '+(+rate.toFixed(2))+'x';}
+rateEl.value=rate;showRate();
+rateEl.oninput=()=>{rate=parseFloat(rateEl.value);showRate();localStorage.setItem('droneVidRate',rate);};
+rateEl.onchange=()=>{if(lineIdx>=0&&voice&&playing)speak(S[idx].lines[lineIdx][1]);};
+function popVoices(){
+  if(!('speechSynthesis' in window))return;
+  const vs=speechSynthesis.getVoices().filter(x=>/^zh/i.test(x.lang));
+  vsel.innerHTML='<option value="">自動(中文)</option>'+
+    vs.map(x=>`<option value="${x.name}">${x.name.replace(/^(Microsoft|Google|Apple)\s*/i,'').replace(/[((].*$/,'')}</option>`).join('');
+  vsel.value=vs.some(x=>x.name===voiceName)?voiceName:'';
+}
+vsel.onchange=()=>{voiceName=vsel.value;localStorage.setItem('droneVidVoice',voiceName);
+  if(lineIdx>=0&&voice&&playing)speak(S[idx].lines[lineIdx][1]);};
+if('speechSynthesis' in window){popVoices();speechSynthesis.onvoiceschanged=popVoices;}
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space'){e.preventDefault();playbtn.onclick();}
+  if(e.code==='ArrowRight')document.getElementById('next').onclick();
+  if(e.code==='ArrowLeft')document.getElementById('prev').onclick();
+});
+if('speechSynthesis' in window)speechSynthesis.getVoices();
+enter(0);setPausedVisual(true);
+</script>
+
+</body>
+</html>
+

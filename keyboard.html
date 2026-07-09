@@ -1,0 +1,522 @@
+﻿<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>無人機足球・十大術科訓練場</title>
+<style>
+  :root{
+    --ground:#0a0f16; --arena:#0d141f; --panel:#111927; --panel2:#0d1520;
+    --line:#223148; --line-soft:#1a2536;
+    --ink:#e9f1f7; --dim:#8ca3b8; --faint:#5c7186;
+    --hud:#4fe3a3; --hud-dim:#2a8f68;
+    --accent:#ff8a3c; --accent-deep:#e06a1a;
+    --warn:#ff5c5c; --purple:#a78bfa; --blue:#4fa8ff; --green:#39d98a; --red:#ff5c5c; --yellow:#ffd23f;
+    --radius:14px;
+    --mono:Consolas,"Cascadia Mono",monospace;
+    --cjk:"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 70% -10%, rgba(79,168,255,.07), transparent 60%),
+      radial-gradient(900px 500px at 10% 110%, rgba(255,138,60,.06), transparent 60%),
+      var(--ground);
+    color:var(--ink); font-family:var(--cjk);
+    min-height:100vh;
+  }
+  button{font-family:var(--cjk)}
+
+  /* ---------- generic ---------- */
+  .tag{
+    display:inline-block; font-size:.72rem; letter-spacing:.12em; padding:.2em .7em;
+    border:1px solid var(--line); border-radius:999px; color:var(--dim);
+  }
+  .tag.hud{color:var(--hud); border-color:rgba(79,227,163,.4)}
+  .tag.acc{color:var(--accent); border-color:rgba(255,138,60,.45)}
+  .btn{
+    cursor:pointer; border:1px solid var(--line); background:var(--panel);
+    color:var(--ink); border-radius:10px; padding:.55em 1.1em; font-size:.95rem;
+    transition:border-color .15s, background .15s;
+  }
+  .btn:hover{border-color:var(--hud-dim)}
+  .btn:focus-visible,.mcard:focus-visible{outline:2px solid var(--hud); outline-offset:2px}
+  .btn.primary{
+    background:linear-gradient(180deg, #ff9a52, var(--accent-deep));
+    border-color:var(--accent-deep); color:#1a0d02; font-weight:700;
+  }
+  .btn.primary:hover{filter:brightness(1.08)}
+  .btn.ghost{background:transparent}
+
+  /* ---------- menu ---------- */
+  #menu{max-width:1060px; margin:0 auto; padding:34px 22px 60px}
+  .hero{display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px 28px; margin-bottom:8px}
+  .hero h1{
+    font-size:clamp(1.7rem,4.4vw,2.7rem); line-height:1.15; margin:.4em 0 .1em;
+    font-weight:900; letter-spacing:.02em; text-wrap:balance;
+  }
+  .hero h1 .accent{color:var(--accent)}
+  .kicker{font-family:var(--mono); color:var(--hud); font-size:.8rem; letter-spacing:.28em}
+  .hero p.lead{color:var(--dim); max-width:34em; line-height:1.75; margin:.4em 0 0; font-size:.95rem}
+  .hero-side{margin-left:auto; display:flex; flex-direction:column; gap:10px; align-items:flex-end}
+  .totalstars{font-family:var(--mono); color:var(--yellow); font-size:1.05rem}
+  .totalstars small{color:var(--faint); font-size:.72rem; letter-spacing:.1em; display:block; text-align:right}
+
+  .ctrl-strip{
+    display:flex; flex-wrap:wrap; gap:10px 22px; align-items:center;
+    border:1px solid var(--line-soft); background:var(--panel2); border-radius:var(--radius);
+    padding:12px 18px; margin:22px 0 30px; font-size:.85rem; color:var(--dim);
+  }
+  .ctrl-strip b{color:var(--ink); font-weight:700}
+  .kbd{font-family:var(--mono); background:#1a2434; border:1px solid var(--line); border-bottom-width:2px;
+    border-radius:5px; padding:.06em .45em; color:var(--hud); font-size:.82em}
+
+  .stage{margin-bottom:34px}
+  .stage-head{display:flex; align-items:baseline; gap:14px; margin-bottom:14px; flex-wrap:wrap}
+  .stage-head .no{font-family:var(--mono); font-size:.78rem; letter-spacing:.2em; color:var(--faint)}
+  .stage-head h2{margin:0; font-size:1.15rem; font-weight:800}
+  .stage-head .rule{flex:1; height:1px; background:linear-gradient(90deg,var(--line),transparent); min-width:60px}
+  .stage.s1 .stage-head h2{color:var(--hud)}
+  .stage.s2 .stage-head h2{color:var(--accent)}
+
+  .mgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(185px,1fr)); gap:12px}
+  .mcard{
+    text-align:left; cursor:pointer; position:relative;
+    border:1px solid var(--line-soft); background:var(--panel); border-radius:var(--radius);
+    padding:14px 14px 12px; color:var(--ink); transition:transform .15s, border-color .15s;
+    display:flex; flex-direction:column; gap:6px; min-height:118px;
+  }
+  .mcard:hover:not(.locked){transform:translateY(-2px); border-color:var(--hud-dim)}
+  .stage.s2 .mcard:hover:not(.locked){border-color:var(--accent-deep)}
+  .mcard .num{font-family:var(--mono); font-size:.72rem; color:var(--faint); letter-spacing:.15em}
+  .mcard .nm{font-weight:800; font-size:.98rem; line-height:1.35; text-wrap:balance}
+  .mcard .skill{font-size:.74rem; color:var(--dim); line-height:1.5}
+  .mcard .stars{margin-top:auto; font-size:.9rem; letter-spacing:.15em; color:var(--yellow)}
+  .mcard .stars .off{color:#33415a}
+  .mcard.locked{opacity:.45; cursor:not-allowed}
+  .mcard.locked .nm::after{content:" 🔒"; font-size:.8em}
+  .menu-foot{display:flex; gap:12px; flex-wrap:wrap; margin-top:6px; align-items:center}
+  .menu-foot .sp{flex:1}
+  .credit{color:var(--faint); font-size:.75rem}
+
+  /* ---------- game ---------- */
+  #game{display:none; max-width:1160px; margin:0 auto; padding:16px 16px 30px}
+  .topbar{display:flex; align-items:center; gap:14px; margin-bottom:12px; flex-wrap:wrap}
+  .topbar .mtitle{font-weight:800; font-size:1.05rem}
+  .topbar .msub{color:var(--dim); font-size:.8rem}
+  .topbar .sp{flex:1}
+  .readout{font-family:var(--mono); color:var(--hud); font-size:.95rem; font-variant-numeric:tabular-nums}
+  .readout small{color:var(--faint); font-size:.68rem; letter-spacing:.15em; margin-right:.4em}
+  .readout.warnc{color:var(--warn)}
+
+  .gwrap{display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:14px}
+  @media (max-width:900px){ .gwrap{grid-template-columns:1fr} }
+  .arena-wrap{
+    position:relative; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;
+    background:var(--arena); aspect-ratio:16/10; max-height:78vh; margin:0 auto; width:100%;
+  }
+  canvas#cv{display:block; width:100%; height:100%; touch-action:none}
+  canvas#hud{position:absolute; inset:0; width:100%; height:100%; pointer-events:none}
+  .arena-tools{position:absolute; left:10px; top:10px; z-index:5; display:flex; flex-direction:column; gap:6px; align-items:flex-start}
+  .viewbtn{
+    font-size:.8rem; padding:.35em .9em;
+    background:rgba(13,21,32,.78); backdrop-filter:blur(2px);
+  }
+  .warnflash{
+    position:absolute; top:52px; left:50%; transform:translateX(-50%);
+    background:rgba(255,92,92,.14); border:1px solid rgba(255,92,92,.55); color:#ffb3b3;
+    font-size:.85rem; padding:.3em 1em; border-radius:999px; pointer-events:none; opacity:0;
+    transition:opacity .2s; white-space:nowrap;
+  }
+  .warnflash.on{opacity:1}
+
+  .side{display:flex; flex-direction:column; gap:12px; min-width:0}
+  .panelbox{border:1px solid var(--line-soft); background:var(--panel); border-radius:var(--radius); padding:14px 16px}
+  .panelbox h3{margin:0 0 10px; font-size:.78rem; letter-spacing:.2em; color:var(--faint); font-weight:700}
+  .goal-main{font-size:.92rem; line-height:1.7; color:var(--ink)}
+  ul.steps{list-style:none; margin:10px 0 0; padding:0; display:flex; flex-direction:column; gap:7px}
+  ul.steps li{
+    display:flex; gap:9px; align-items:baseline; font-size:.85rem; color:var(--dim); line-height:1.5;
+  }
+  ul.steps li::before{
+    content:"○"; color:var(--faint); font-size:.8em; flex:none; font-family:var(--mono);
+  }
+  ul.steps li.cur{color:var(--ink)}
+  ul.steps li.cur::before{content:"▶"; color:var(--accent)}
+  ul.steps li.done{color:var(--hud)}
+  ul.steps li.done::before{content:"✓"; color:var(--hud)}
+  .coach{font-size:.83rem; color:var(--dim); line-height:1.75}
+  .coach b{color:var(--accent); font-weight:700}
+  .databar{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px}
+  .datum{background:var(--panel2); border:1px solid var(--line-soft); border-radius:10px; padding:8px 10px}
+  .datum .lb{font-size:.62rem; letter-spacing:.18em; color:var(--faint)}
+  .datum .vl{font-family:var(--mono); font-size:1.05rem; color:var(--hud); font-variant-numeric:tabular-nums}
+  .datum .vl.warnc{color:var(--warn)}
+
+  /* sticks */
+  .sticksrow{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:2px}
+  .stick{
+    position:relative; aspect-ratio:1/1; max-width:132px; margin:0 auto; width:100%;
+    background:radial-gradient(circle at 50% 40%, #16202f, #0c1320);
+    border:1px solid var(--line); border-radius:50%; touch-action:none; cursor:grab;
+  }
+  .stick .knob{
+    position:absolute; width:38%; height:38%; left:31%; top:31%;
+    background:radial-gradient(circle at 35% 30%, #33465f, #17222f);
+    border:1px solid #3a4d68; border-radius:50%; pointer-events:none;
+    box-shadow:0 3px 10px rgba(0,0,0,.5);
+  }
+  .stick .axis{position:absolute; inset:12%; border-radius:50%; border:1px dashed #23324a; pointer-events:none}
+  .sticklb{text-align:center; font-size:.68rem; color:var(--faint); letter-spacing:.1em; margin-top:5px; line-height:1.6}
+  .sticklb b{color:var(--dim)}
+  .actionrow{display:flex; gap:8px; margin-top:10px}
+  .actionrow .btn{flex:1; font-size:.85rem; padding:.5em .4em}
+  .btn.cut{border-color:#6b2a2a; color:#ff9c9c; background:#1d1214}
+  .btn.cut:hover{border-color:var(--warn)}
+
+  /* overlays */
+  .ovl{
+    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    background:rgba(5,8,13,.78); z-index:50; padding:20px; backdrop-filter:blur(3px);
+  }
+  .ovl.show{display:flex}
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:18px;
+    padding:26px 30px; max-width:480px; width:100%; max-height:88vh; overflow-y:auto;
+  }
+  .card h2{margin:0 0 4px; font-size:1.3rem; font-weight:900; text-wrap:balance}
+  .card .sub{color:var(--dim); font-size:.85rem; margin-bottom:14px}
+  .bigstars{font-size:2.1rem; letter-spacing:.18em; color:var(--yellow); margin:10px 0 4px}
+  .bigstars .off{color:#2c3a52}
+  .result-line{font-family:var(--mono); color:var(--hud); font-size:.95rem; margin-bottom:2px}
+  .verdict{color:var(--dim); font-size:.9rem; line-height:1.75; margin:12px 0 18px}
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap}
+  .brief-goal{
+    background:var(--panel2); border:1px solid var(--line-soft); border-left:3px solid var(--accent);
+    border-radius:10px; padding:12px 15px; font-size:.92rem; line-height:1.8; margin:14px 0;
+  }
+  .brief-keys{font-size:.82rem; color:var(--dim); line-height:1.9; margin-bottom:16px}
+  .brief-keys b{color:var(--ink)}
+
+  table.std{border-collapse:collapse; width:100%; font-size:.86rem; margin:14px 0 6px}
+  table.std th,table.std td{border:1px solid var(--line-soft); padding:.55em .8em; text-align:left; line-height:1.5}
+  table.std th{color:var(--faint); font-size:.72rem; letter-spacing:.15em; font-weight:700; background:var(--panel2)}
+  table.std td:first-child{color:var(--accent); font-weight:700; white-space:nowrap}
+  table.std td{color:var(--dim)}
+  table.std td b{color:var(--ink)}
+
+  /* ---------- players / leaderboard ---------- */
+  .chipsrow{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0}
+  .pchip{
+    cursor:pointer; border:1px solid var(--line); background:var(--panel2); color:var(--ink);
+    border-radius:999px; padding:.35em 1em; font-size:.85rem; display:inline-flex; gap:.6em; align-items:center;
+    font-family:var(--cjk);
+  }
+  .pchip .st{color:var(--yellow); font-size:.8em}
+  .pchip.cur{border-color:var(--hud); color:var(--hud)}
+  .pchip .del{color:var(--faint)}
+  .pchip.confirmdel{border-color:var(--warn); color:var(--warn)}
+  input.txt,textarea.txt{
+    width:100%; background:var(--panel2); border:1px solid var(--line); border-radius:10px;
+    color:var(--ink); font-family:var(--cjk); font-size:.95rem; padding:.55em .8em;
+  }
+  textarea.txt{font-family:var(--mono); font-size:.85rem; min-height:70px; resize:vertical}
+  input.txt:focus,textarea.txt:focus{outline:2px solid var(--hud-dim)}
+  .boardtabs{display:flex; gap:8px; margin:12px 0; flex-wrap:wrap; align-items:center}
+  .boardtabs .btn.on{border-color:var(--accent); color:var(--accent)}
+  select.sel{
+    background:var(--panel2); border:1px solid var(--line); color:var(--ink); border-radius:10px;
+    padding:.45em .7em; font-family:var(--cjk); font-size:.9rem; max-width:100%;
+  }
+  table.bd{border-collapse:collapse; width:100%; font-size:.88rem}
+  table.bd th,table.bd td{border-bottom:1px solid var(--line-soft); padding:.5em .7em; text-align:left; white-space:nowrap}
+  table.bd th{color:var(--faint); font-size:.7rem; letter-spacing:.15em; font-weight:700; position:sticky; top:0; background:var(--panel)}
+  table.bd td{color:var(--dim); font-variant-numeric:tabular-nums}
+  table.bd td.nm{color:var(--ink); font-weight:700}
+  table.bd td.st{color:var(--yellow); letter-spacing:.1em}
+  table.bd tr.top1 td:first-child{color:var(--yellow)}
+  .tblwrap{overflow-x:auto; max-height:38vh; overflow-y:auto; border:1px solid var(--line-soft); border-radius:10px}
+  .codebox{
+    display:flex; gap:8px; align-items:center; background:var(--panel2); border:1px dashed var(--hud-dim);
+    border-radius:10px; padding:.6em .9em; margin:12px 0 4px;
+  }
+  .codebox code{font-family:var(--mono); color:var(--hud); font-size:.9rem; word-break:break-all; flex:1}
+  .hintline{color:var(--faint); font-size:.76rem; line-height:1.7}
+  .okmsg{color:var(--hud); font-size:.82rem; min-height:1.4em}
+  .okmsg.bad{color:var(--warn)}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important; animation:none !important}
+  }
+</style>
+
+<!-- ================= MENU ================= -->
+<div id="menu">
+  <div class="hero">
+    <div>
+      <div class="kicker">DRONE SOCCER TRAINING GROUND</div>
+      <h1>無人機足球<span class="accent">・</span>十大術科訓練場</h1>
+      <p class="lead">依照術科操縱指南打造的模擬飛行訓練。用真實 Mode 2 雙搖桿操作,從起飛懸停到守門斷電,一關一關考取你的飛行執照。</p>
+    </div>
+    <div class="hero-side">
+      <button class="btn ghost" id="btnPlayer">👤 學員:未登記</button>
+      <div class="totalstars"><small>累計星等</small><span id="totalStars">☆ 0 / 30</span></div>
+      <span class="tag hud" id="rankTag">見習飛手</span>
+    </div>
+  </div>
+
+  <div class="ctrl-strip">
+    <span><b>左搖桿</b>|<span class="kbd">W</span><span class="kbd">S</span> 油門升降・<span class="kbd">A</span><span class="kbd">D</span> 旋轉(Yaw)</span>
+    <span><b>右搖桿</b>|<span class="kbd">↑</span><span class="kbd">↓</span> 前後飛(Pitch)・<span class="kbd">←</span><span class="kbd">→</span> 左右側飛(Roll)</span>
+    <span><span class="kbd">X</span> 緊急斷電</span>
+    <span><span class="kbd">R</span> 重試本關</span>
+    <span><span class="kbd">V</span> 切換視角(第一人稱/追機/俯視)</span>
+    <span style="color:var(--faint)">平板學員可直接拖曳畫面下方的虛擬搖桿</span>
+  </div>
+
+  <div class="stage s1">
+    <div class="stage-head">
+      <span class="no">STAGE 01</span><h2>第一階段:基礎控球與精準位移</h2><div class="rule"></div>
+    </div>
+    <div class="mgrid" id="grid1"></div>
+  </div>
+
+  <div class="stage s2">
+    <div class="stage-head">
+      <span class="no">STAGE 02</span><h2>第二階段:進階航路與足球專項技巧</h2><div class="rule"></div>
+    </div>
+    <div class="mgrid" id="grid2"></div>
+  </div>
+
+  <div class="menu-foot">
+    <button class="btn ghost" id="btnBoard">🏆 計分排行榜</button>
+    <button class="btn ghost" id="btnStd">📋 關鍵技術標準</button>
+    <button class="btn ghost" id="btnTeacher">教師模式:全部解鎖</button>
+    <div class="sp"></div>
+    <button class="btn ghost" id="btnReset" style="color:var(--faint)">清除進度</button>
+    <span class="credit">課程營隊教學用・依「無人機足球:10 大基礎術科操縱指南」設計</span>
+  </div>
+</div>
+
+<!-- ================= GAME ================= -->
+<div id="game">
+  <div class="topbar">
+    <button class="btn ghost" id="btnBack">← 選單</button>
+    <div>
+      <div class="mtitle" id="gTitle">—</div>
+      <div class="msub" id="gSub">—</div>
+    </div>
+    <div class="sp"></div>
+    <div class="readout"><small>TIME</small><span id="roTime">0.0</span></div>
+    <div class="readout" id="roFaultWrap"><small>FAULT</small><span id="roFault">0</span></div>
+  </div>
+
+  <div class="gwrap">
+    <div class="arena-wrap">
+      <canvas id="cv"></canvas>
+      <canvas id="hud"></canvas>
+      <div class="arena-tools">
+        <button class="btn viewbtn" id="btnView">📷 追機視角(V)</button>
+        <button class="btn viewbtn" id="btnScenery">🏟️ 場景:開</button>
+      </div>
+      <div class="warnflash" id="warnflash">警告</div>
+    </div>
+
+    <div class="side">
+      <div class="databar">
+        <div class="datum"><div class="lb">ALT 高度</div><div class="vl" id="dAlt">0.00m</div></div>
+        <div class="datum"><div class="lb">HDG 機頭</div><div class="vl" id="dHdg">前 000°</div></div>
+        <div class="datum"><div class="lb">SPD 速度</div><div class="vl" id="dSpd">0.0m/s</div></div>
+      </div>
+
+      <div class="panelbox">
+        <h3>任務目標</h3>
+        <div class="goal-main" id="gGoal">—</div>
+        <ul class="steps" id="gSteps"></ul>
+      </div>
+
+      <div class="panelbox">
+        <h3>教練提示</h3>
+        <div class="coach" id="gCoach">—</div>
+      </div>
+
+      <div class="panelbox">
+        <div class="sticksrow">
+          <div>
+            <div class="stick" id="stickL"><div class="axis"></div><div class="knob"></div></div>
+            <div class="sticklb"><b>左桿</b> 油門 / 旋轉<br>W S A D</div>
+          </div>
+          <div>
+            <div class="stick" id="stickR"><div class="axis"></div><div class="knob"></div></div>
+            <div class="sticklb"><b>右桿</b> 前後 / 側飛<br>↑ ↓ ← →</div>
+          </div>
+        </div>
+        <div class="actionrow">
+          <button class="btn cut" id="btnCut">⏻ 斷電 (X)</button>
+          <button class="btn" id="btnRetry">↺ 重試 (R)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= BRIEF ================= -->
+<div class="ovl" id="ovlBrief">
+  <div class="card">
+    <span class="tag acc" id="bTag">任務 01</span>
+    <h2 id="bTitle" style="margin-top:10px">—</h2>
+    <div class="sub" id="bSkill">—</div>
+    <div class="brief-goal" id="bGoal">—</div>
+    <div class="brief-keys" id="bKeys">—</div>
+    <div class="btnrow">
+      <button class="btn primary" id="btnStart">🚁 開始任務</button>
+      <button class="btn ghost" id="btnBriefBack">回選單</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= RESULT ================= -->
+<div class="ovl" id="ovlDone">
+  <div class="card">
+    <span class="tag hud" id="rTag">任務完成</span>
+    <h2 id="rTitle" style="margin-top:10px">—</h2>
+    <div class="bigstars" id="rStars">★★★</div>
+    <div class="result-line" id="rTime">TIME 00.0s</div>
+    <div class="result-line" id="rFault">FAULT 0</div>
+    <div class="codebox"><code id="rCode">—</code><button class="btn" id="btnCopyCode" style="flex:none">複製</button></div>
+    <div class="hintline">成績代碼:抄給教練,或貼進「🏆 計分排行榜」即可登錄。</div>
+    <div class="verdict" id="rVerdict">—</div>
+    <div class="btnrow">
+      <button class="btn primary" id="btnNext">下一關 →</button>
+      <button class="btn" id="btnAgain">↺ 再飛一次</button>
+      <button class="btn ghost" id="btnDoneBack">回選單</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= STANDARDS ================= -->
+<div class="ovl" id="ovlStd">
+  <div class="card" style="max-width:560px">
+    <span class="tag acc">供教學參考</span>
+    <h2 style="margin-top:10px">關鍵技術標準</h2>
+    <table class="std">
+      <tr><th>項目</th><th>標準</th><th>要求</th></tr>
+      <tr><td>定點懸停</td><td>維持在半徑 <b>50cm</b> 範圍內</td><td>持續 <b>10 秒</b></td></tr>
+      <tr><td>四方位旋轉</td><td>每次旋轉 <b>90°</b>(右、後、左、前)</td><td>每個方位停 <b>3 秒</b></td></tr>
+      <tr><td>穩定性標準</td><td>高度誤差 <b>&lt; 20cm</b></td><td>不可產生大幅起伏</td></tr>
+      <tr><td>正方形航路</td><td>每個角點原地旋轉 <b>90°</b>,共 4 次</td><td>機頭對準前進方向</td></tr>
+      <tr><td>守門擋球</td><td>守備區內擋下射門,高度需對上(<b>±35cm</b>)</td><td>擋下 <b>5 球</b></td></tr>
+      <tr><td>緊急斷電</td><td>落地後 <b>1 秒內</b>完成斷電</td><td>—</td></tr>
+    </table>
+    <div class="btnrow" style="margin-top:14px">
+      <button class="btn" id="btnStdClose">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= PLAYER ================= -->
+<div class="ovl" id="ovlPlayer">
+  <div class="card">
+    <span class="tag hud">學員登記</span>
+    <h2 style="margin-top:10px">你是誰?</h2>
+    <div class="sub">成績會以名字記錄在這台裝置上,過關時也會產生「成績代碼」讓教練登錄到排行榜。</div>
+    <input class="txt" id="plName" maxlength="10" placeholder="輸入名字後按「登記」">
+    <div class="chipsrow" id="plList"></div>
+    <div class="btnrow" style="margin-top:8px">
+      <button class="btn primary" id="btnPlOk">登記 / 切換</button>
+      <button class="btn ghost" id="btnPlClose">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= LEADERBOARD ================= -->
+<div class="ovl" id="ovlBoard">
+  <div class="card" style="max-width:760px">
+    <span class="tag acc">🏆 教練台</span>
+    <h2 style="margin-top:10px">計分排行榜</h2>
+    <div class="boardtabs">
+      <button class="btn on" id="tabTotal">總排名</button>
+      <button class="btn" id="tabMission">各關成績</button>
+      <select class="sel" id="bdMission" style="display:none"></select>
+    </div>
+    <div class="tblwrap"><table class="bd" id="bdTable"></table></div>
+    <h3 style="margin:16px 0 6px; font-size:.78rem; letter-spacing:.2em; color:var(--faint); font-weight:700">登錄成績代碼(一行一筆,可貼多筆)</h3>
+    <textarea class="txt" id="codeIn" placeholder="例:小明-7-3-24.5-2-0A3"></textarea>
+    <div class="okmsg" id="codeMsg"></div>
+    <div class="btnrow" style="margin-top:4px">
+      <button class="btn" id="btnAddCode">➕ 登錄代碼</button>
+      <button class="btn" id="btnCsv">⬇ 匯出 CSV</button>
+      <button class="btn" id="btnJson">⬇ 匯出備份</button>
+      <button class="btn" id="btnImp">⬆ 匯入備份</button>
+      <input type="file" id="impFile" accept=".json,application/json" style="display:none">
+      <button class="btn" id="btnClearBoard" style="color:var(--faint)">清空成績</button>
+      <button class="btn ghost" id="btnBoardClose">關閉</button>
+    </div>
+    <div class="hintline" style="margin-top:8px">成績保存在這台裝置的瀏覽器中。營隊多台裝置彙整:各台按「匯出備份」,把檔案傳到教練機按「匯入備份」合併;或讓學員把成績代碼抄給教練登錄。匯出 CSV 可直接用 Excel 開啟。</div>
+  </div>
+</div>
+
+
+<script src="three.min.js"></script>
+<script src="game-core.js"></script>
+<script src="render3d.js"></script>
+<script>
+'use strict';
+/* =========================================================
+   鍵盤 + 觸控虛擬搖桿 輸入層
+   共用邏輯在 game-core.js,3D 渲染在 render3d.js
+   ========================================================= */
+const keys={};
+window.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if(k==='v' && scene!=='menu'){ Render3D.cycleView(); return; }
+  if(scene!=='play') return;
+  if(['w','s','a','d','arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
+  keys[k]=true;
+  if(k==='x') doCut();
+  if(k==='r') startMission(mi);
+});
+window.addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
+
+function makeStick(el,onMove){
+  const knob=el.querySelector('.knob');
+  let pid=null;
+  function setFromEvent(ev){
+    const r=el.getBoundingClientRect();
+    let dx=(ev.clientX-r.left-r.width/2)/(r.width/2);
+    let dy=(ev.clientY-r.top-r.height/2)/(r.height/2);
+    const m=Math.hypot(dx,dy); if(m>1){dx/=m;dy/=m;}
+    knob.style.left=(31+dx*31)+'%'; knob.style.top=(31+dy*31)+'%';
+    onMove(dx,-dy);
+  }
+  el.addEventListener('pointerdown',ev=>{ pid=ev.pointerId; el.setPointerCapture(pid); setFromEvent(ev); });
+  el.addEventListener('pointermove',ev=>{ if(ev.pointerId===pid) setFromEvent(ev); });
+  const end=ev=>{ if(ev.pointerId!==pid) return; pid=null; knob.style.left='31%'; knob.style.top='31%'; onMove(0,0); };
+  el.addEventListener('pointerup',end); el.addEventListener('pointercancel',end);
+  return {knob};
+}
+const vL={x:0,y:0}, vR={x:0,y:0};
+const stL=makeStick($('stickL'),(x,y)=>{vL.x=x;vL.y=y;});
+const stR=makeStick($('stickR'),(x,y)=>{vR.x=x;vR.y=y;});
+
+window.readInput=function(){
+  const kThr=(keys['w']?1:0)+(keys['s']?-1:0);
+  const kYaw=(keys['d']?1:0)+(keys['a']?-1:0);
+  const kPit=(keys['arrowup']?1:0)+(keys['arrowdown']?-1:0);
+  const kRol=(keys['arrowright']?1:0)+(keys['arrowleft']?-1:0);
+  stick.thr=clamp(kThr+vL.y,-1,1);
+  stick.yaw=clamp(kYaw+vL.x,-1,1);
+  stick.pitch=clamp(kPit+vR.y,-1,1);
+  stick.roll=clamp(kRol+vR.x,-1,1);
+  // keyboard reflects on knobs when virtual idle
+  if(vL.x===0&&vL.y===0){ stL.knob.style.left=(31+stick.yaw*28)+'%'; stL.knob.style.top=(31-stick.thr*28)+'%'; }
+  if(vR.x===0&&vR.y===0){ stR.knob.style.left=(31+stick.roll*28)+'%'; stR.knob.style.top=(31-stick.pitch*28)+'%'; }
+  if(!started && scene==='play' && (Math.abs(stick.thr)+Math.abs(stick.yaw)+Math.abs(stick.pitch)+Math.abs(stick.roll))>0.15){
+    started=true;
+  }
+};
+
+startApp();
+</script>
+
+</html>

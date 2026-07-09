@@ -1,0 +1,653 @@
+﻿<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>天穹足球無人機|遙控器按鍵教學錄影</title>
+<style>
+:root{
+  --bg:#0b1220; --panel:#131c2e; --panel2:#0f1727; --line:#22304a;
+  --hud:#4fe3a3; --accent:#ff8a3c; --blue:#5aa7ff; --red:#ff5a6e;
+  --txt:#e8eef7; --dim:#8fa3bf; --gold:#ffd166;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--txt);
+  font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;
+  min-height:100vh; display:flex; flex-direction:column; align-items:center;
+  padding:14px 14px 40px;
+}
+.mono{font-family:Consolas,"SF Mono",monospace}
+.wrap{width:100%;max-width:980px}
+header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 4px 14px}
+.rec{width:12px;height:12px;border-radius:50%;background:var(--red);
+  box-shadow:0 0 10px var(--red);animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+header.top h1{font-size:clamp(16px,2.6vw,22px);margin:0;letter-spacing:1px}
+header.top .sub{color:var(--dim);font-size:12px;letter-spacing:2px}
+.player{background:var(--panel2);border:1px solid var(--line);border-radius:14px;
+  overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+.stagebox{position:relative;background:radial-gradient(120% 100% at 50% 0%,#101c33 0%,#0a111f 70%)}
+.stage{display:block;width:100%;aspect-ratio:16/9;position:relative}
+.stage svg{display:block;width:100%;height:100%}
+.badge{position:absolute;top:10px;left:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-width:70%}
+.badge .part{background:var(--accent);color:#20140a;font-weight:700;font-size:11px;
+  padding:3px 10px;border-radius:999px;letter-spacing:1px}
+.badge .tname{background:rgba(10,17,31,.8);border:1px solid var(--line);
+  padding:4px 12px;border-radius:999px;font-size:13px;font-weight:700}
+.cmd{position:absolute;top:10px;right:10px;max-width:46%;
+  background:rgba(79,227,163,.12);border:1px solid rgba(79,227,163,.4);
+  color:var(--hud);font-size:12px;padding:4px 10px;border-radius:8px}
+.cmd b{color:#bfffe4}
+.sub-band{position:absolute;left:0;right:0;bottom:0;padding:10px 16px 12px;text-align:center;
+  background:linear-gradient(transparent,rgba(5,9,17,.88) 40%);pointer-events:none}
+.subtitle{display:inline-block;font-size:clamp(13px,2.4vw,19px);font-weight:700;
+  color:#fff;text-shadow:0 2px 6px #000;background:rgba(9,14,25,.55);
+  padding:4px 14px;border-radius:8px;min-height:1.4em}
+.bigplay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(6,10,18,.55);cursor:pointer;border:0;width:100%;
+  flex-direction:column;gap:12px;color:var(--txt)}
+.bigplay .btn{width:88px;height:88px;border-radius:50%;background:var(--hud);color:#06251a;
+  display:flex;align-items:center;justify-content:center;font-size:38px;
+  box-shadow:0 0 0 10px rgba(79,227,163,.18),0 8px 30px rgba(0,0,0,.5)}
+.bigplay p{margin:0;font-size:14px;color:var(--dim)}
+.bigplay.hide{display:none}
+.controls{display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:var(--panel);border-top:1px solid var(--line);flex-wrap:wrap}
+.cbtn{background:#1b2740;border:1px solid var(--line);color:var(--txt);
+  border-radius:10px;font-size:17px;line-height:1;cursor:pointer;padding:9px 14px;min-width:46px}
+.cbtn:hover{background:#243350}
+.cbtn:focus-visible,.chip:focus-visible,.bigplay:focus-visible{outline:2px solid var(--hud);outline-offset:2px}
+.cbtn.play{background:var(--hud);color:#06251a;font-weight:700}
+.vsel{max-width:150px;font-size:12px;padding:8px 6px}
+.ratewrap{display:flex;align-items:center;gap:8px;background:#18233a;
+  border:1px solid var(--line);border-radius:10px;padding:6px 12px}
+.ratewrap span{font-size:12px;color:var(--dim);white-space:nowrap;
+  font-family:Consolas,monospace;min-width:74px}
+.ratewrap input{width:110px;accent-color:var(--hud)}
+.timeline{flex:1;display:flex;gap:3px;height:14px;align-items:stretch;min-width:160px;cursor:pointer}
+.seg{position:relative;background:#1c2942;border-radius:3px;overflow:hidden;flex-grow:1}
+.seg .fill{position:absolute;inset:0;width:0%;background:var(--hud)}
+.seg.done .fill{width:100%}
+.tdisp{font-size:12px;color:var(--dim);min-width:86px;text-align:right}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:10px 14px;background:var(--panel);
+  border-top:1px solid var(--line)}
+.chip{flex:0 0 auto;background:#18233a;border:1px solid var(--line);color:var(--dim);
+  font-size:12px;padding:6px 11px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.chip .n{color:var(--accent);font-weight:700;margin-right:4px}
+.chip.cur{background:rgba(79,227,163,.15);border-color:var(--hud);color:#dffff0}
+.infogrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+@media(max-width:640px){.infogrid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.card h3{margin:0 0 10px;font-size:12px;letter-spacing:3px;color:var(--accent)}
+.card.crit h3{color:var(--hud)}
+.card ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.card li{font-size:14px;padding-left:22px;position:relative;color:#d7e1f0}
+.card.steps li::before{content:"▸";position:absolute;left:4px;color:var(--accent)}
+.card.crit li::before{content:"!";position:absolute;left:6px;color:var(--gold);font-weight:700}
+footer{margin-top:22px;color:var(--dim);font-size:12px;text-align:center;line-height:1.8}
+.stage.paused svg *{animation-play-state:paused!important}
+
+/* ===== SVG common ===== */
+svg text{font-family:"Microsoft JhengHei",sans-serif}
+.lbl{fill:#9fb3cc;font-size:14px}
+.klbl{fill:#8fa3bf;font-size:11px}
+.mlbl{fill:var(--hud);font-size:13px;font-family:Consolas,monospace}
+.rotor,.knob,.mv{transform-box:fill-box;transform-origin:center}
+.rotor{animation:spin .45s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hot{animation:hotp 1.5s ease-in-out infinite}
+@keyframes hotp{0%,100%{filter:drop-shadow(0 0 3px var(--accent))}50%{filter:drop-shadow(0 0 14px var(--accent))}}
+.floaty{animation:floaty 3.5s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+/* stick knob motion (6s cycles) */
+.k-ud{animation:kud 6s ease-in-out infinite}
+@keyframes kud{0%,8%{transform:translateY(0)}16%,34%{transform:translateY(-26px)}
+ 42%,52%{transform:translateY(0)}60%,78%{transform:translateY(26px)}86%,100%{transform:translateY(0)}}
+.k-lr{animation:klr 6s ease-in-out infinite}
+@keyframes klr{0%,8%{transform:translateX(0)}16%,34%{transform:translateX(-26px)}
+ 42%,52%{transform:translateX(0)}60%,78%{transform:translateX(26px)}86%,100%{transform:translateX(0)}}
+.k-updown-once{animation:kponce 6s ease-in-out infinite}
+@keyframes kponce{0%,20%{transform:translateY(0)}30%,40%{transform:translateY(-26px)}
+ 50%,60%{transform:translateY(26px)}70%,100%{transform:translateY(0)}}
+
+/* reaction: drone up/down (throttle) */
+.r-ud{animation:rud 6s ease-in-out infinite}
+@keyframes rud{0%,8%{transform:translateY(-70px)}16%,34%{transform:translateY(-150px)}
+ 42%,52%{transform:translateY(-70px)}60%,78%{transform:translateY(-8px)}86%,100%{transform:translateY(-70px)}}
+/* reaction: yaw rotate */
+.r-yaw{animation:ryaw 6s ease-in-out infinite}
+@keyframes ryaw{0%,8%{transform:rotate(0)}16%,34%{transform:rotate(-85deg)}
+ 42%,52%{transform:rotate(0)}60%,78%{transform:rotate(85deg)}86%,100%{transform:rotate(0)}}
+/* reaction: forward/back (top view) */
+.r-fb{animation:rfb 6s ease-in-out infinite}
+@keyframes rfb{0%,8%{transform:translateY(0)}16%,34%{transform:translateY(-80px)}
+ 42%,52%{transform:translateY(0)}60%,78%{transform:translateY(60px)}86%,100%{transform:translateY(0)}}
+/* reaction: side slide */
+.r-side{animation:rside 6s ease-in-out infinite}
+@keyframes rside{0%,8%{transform:translateX(0)}16%,34%{transform:translateX(-75px)}
+ 42%,52%{transform:translateX(0)}60%,78%{transform:translateX(75px)}86%,100%{transform:translateX(0)}}
+/* estop: press → drop → off */
+.b-press{animation:bpress 7s infinite}
+@keyframes bpress{0%,38%{transform:scale(1)}41%,46%{transform:scale(.86)}49%,100%{transform:scale(1)}}
+.r-drop{animation:rdrop 7s ease-in infinite}
+@keyframes rdrop{0%,44%{transform:translateY(-140px)}70%,100%{transform:translateY(-4px)}}
+.r-droprotor{animation:rdr 7s infinite}
+@keyframes rdr{0%,44%{opacity:1}48%,100%{opacity:0}}
+.r-off{animation:roff 7s infinite}
+@keyframes roff{0%,66%{opacity:0}72%,78%{opacity:1}80%{opacity:.25}84%,100%{opacity:1}}
+/* pairing LED */
+.led-pair{animation:lp 6s infinite}
+@keyframes lp{0%,10%{opacity:.15}14%{opacity:1}18%{opacity:.15}22%{opacity:1}
+ 26%{opacity:.15}30%{opacity:1}34%{opacity:.15}42%,100%{opacity:1}}
+.linkwave{animation:lw 2s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes lw{0%{transform:scale(.5);opacity:.9}100%{transform:scale(1.4);opacity:0}}
+/* alt-hold steady vs wobble */
+.r-steady{animation:rsteady 4s ease-in-out infinite}
+@keyframes rsteady{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.r-wobble{animation:rwob 2.2s ease-in-out infinite}
+@keyframes rwob{0%{transform:translate(0,0) rotate(0)}25%{transform:translate(-14px,26px) rotate(-12deg)}
+ 50%{transform:translate(10px,-20px) rotate(9deg)}75%{transform:translate(-8px,14px) rotate(-7deg)}100%{transform:translate(0,0) rotate(0)}}
+/* speed beeps */
+.beep1{animation:bp 9s infinite}
+.beep2{animation:bp 9s infinite;animation-delay:3s}
+.beep3{animation:bp 9s infinite;animation-delay:6s}
+@keyframes bp{0%,2%{opacity:.18}4%,30%{opacity:1}33%,100%{opacity:.18}}
+.spd-dash{animation:sd 9s infinite}
+@keyframes sd{0%,32%{opacity:.15}34%,65%{opacity:.5}67%,100%{opacity:1}}
+/* light color cycle */
+.lcage{animation:lcyc 6s infinite}
+@keyframes lcyc{0%,28%{stroke:#5aa7ff}33%,61%{stroke:#ff5a6e}66%,94%{stroke:#4fe3a3}100%{stroke:#5aa7ff}}
+.lcore{animation:lcyc2 6s infinite}
+@keyframes lcyc2{0%,28%{fill:#5aa7ff}33%,61%{fill:#ff5a6e}66%,94%{fill:#4fe3a3}100%{fill:#5aa7ff}}
+/* full flow */
+.f-drone{animation:ffly 20s linear infinite}
+@keyframes ffly{0%,22%{transform:translateY(0)}30%,62%{transform:translateY(-140px)}
+ 72%,80%{transform:translateY(0)}100%{transform:translateY(0)}}
+.f-rotor{animation:frot 20s linear infinite}
+@keyframes frot{0%,16%{opacity:0}18%,80%{opacity:1}84%,100%{opacity:0}}
+.fstep{animation:fstep 20s linear infinite;fill:#8fa3bf}
+@keyframes fstep{0%,2%{fill:#8fa3bf}3%,15%{fill:#ffffff;font-weight:700}16%,100%{fill:#8fa3bf}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="rec" aria-hidden="true"></span>
+    <div>
+      <h1>天穹足球無人機|遙控器按鍵教學錄影(美國手)</h1>
+      <div class="sub mono">CONTROLLER GUIDE ⚽ MODE 2 TRAINING FILM</div>
+    </div>
+  </header>
+
+  <div class="player">
+    <div class="stagebox">
+      <div class="stage" id="stage"></div>
+      <div class="badge"><span class="part" id="part"></span><span class="tname" id="tname"></span></div>
+      <div class="cmd" id="cmd"></div>
+      <div class="sub-band"><span class="subtitle" id="subtitle"></span></div>
+      <button class="bigplay" id="bigplay">
+        <span class="btn">▶</span>
+        <p>點一下開始播放(含中文語音旁白,可用 🔊 關閉)</p>
+      </button>
+    </div>
+    <div class="controls">
+      <button class="cbtn" id="prev" title="上一段">⏮</button>
+      <button class="cbtn play" id="playbtn" title="播放/暫停">▶</button>
+      <button class="cbtn" id="next" title="下一段">⏭</button>
+      <div class="timeline" id="timeline" title="點選跳到該段"></div>
+      <span class="tdisp mono" id="tdisp">0:00 / 0:00</span>
+      <button class="cbtn" id="voicebtn" title="語音旁白開/關">🔊</button>
+      <select class="cbtn vsel" id="voicesel" title="旁白聲音"></select>
+      <div class="ratewrap" title="語速調整">
+        <span id="ratelab">語速 0.9x</span>
+        <input type="range" id="rate" min="0.6" max="1.3" step="0.05" value="0.9" aria-label="語速">
+      </div>
+    </div>
+    <nav class="chips" id="chips" aria-label="章節"></nav>
+  </div>
+
+  <div class="infogrid">
+    <div class="card steps"><h3>操作要點</h3><ul id="steps"></ul></div>
+    <div class="card crit"><h3>小提醒</h3><ul id="crit"></ul></div>
+  </div>
+
+  <footer>
+    🕹 美國手(Mode 2)遙控器|左桿:升降+旋轉|右桿:前後+平移<br>
+    按鍵配置依課堂使用的天穹足球無人機遙控器繪製;控制列可選旁白聲音、拉動滑桿調整語速。
+  </footer>
+</div>
+
+<script>
+/* ---------- controller drawing ---------- */
+function stick(cx,cy,knobCls,anim,hot){
+  return `<g class="${hot}">
+    <circle cx="${cx}" cy="${cy}" r="56" fill="#0d1526" stroke="#2c3d5e" stroke-width="3"/>
+    <line x1="${cx-40}" y1="${cy}" x2="${cx+40}" y2="${cy}" stroke="#1b2740" stroke-width="10" stroke-linecap="round"/>
+    <line x1="${cx}" y1="${cy-40}" x2="${cx}" y2="${cy+40}" stroke="#1b2740" stroke-width="10" stroke-linecap="round"/>
+    <g transform="translate(${cx},${cy})"><g class="knob ${knobCls} ${anim}">
+      <circle r="24" fill="#2c3d5e" stroke="#44608c" stroke-width="3"/>
+      <circle r="24" fill="none" stroke="#0d1526" stroke-width="1.5" stroke-dasharray="3 4"/>
+      <circle r="9" fill="#111b2e"/></g></g>
+  </g>`;
+}
+/* hl: which control glows — stickL stickR pair estop alt light speed power */
+function ctrl(hl='',kl='',kr='',x=40,y=45,scale=1){
+  const H=c=>hl===c?'hot':'';
+  return `<g transform="translate(${x},${y}) scale(${scale})">
+    <line x1="105" y1="45" x2="72" y2="2" stroke="#33465f" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="72" cy="2" r="5" fill="#33465f"/>
+    <rect x="10" y="42" width="440" height="318" rx="48" fill="#1a2740" stroke="#2c3d5e" stroke-width="2.5"/>
+    <rect x="10" y="42" width="440" height="318" rx="48" fill="none" stroke="#0d1526" stroke-width="1" opacity=".6" transform="translate(3,4)"/>
+    ${stick(120,170,'knobL',kl,H('stickL'))}
+    ${stick(340,170,'knobR',kr,H('stickR'))}
+    <text x="120" y="252" text-anchor="middle" class="klbl">升降|左右旋轉</text>
+    <text x="340" y="252" text-anchor="middle" class="klbl">前後|左右平移</text>
+    <g class="${H('pair')}">
+      <circle cx="230" cy="118" r="11" fill="#0d1526" stroke="#5f7ba8" stroke-width="2"/>
+      <circle cx="230" cy="118" r="4.5" fill="var(--hud)" class="pairled"/>
+    </g>
+    <text x="230" y="98" text-anchor="middle" class="klbl">對頻點</text>
+    <g class="${H('estop')} bE">
+      <rect x="172" y="272" width="54" height="26" rx="6" fill="#3a1c26" stroke="var(--red)" stroke-width="2.5"/>
+      <text x="199" y="290" text-anchor="middle" fill="var(--red)" font-size="12" font-weight="700">STOP</text>
+    </g>
+    <text x="199" y="266" text-anchor="middle" class="klbl">緊急關閉/啟動</text>
+    <g class="${H('alt')}">
+      <rect x="236" y="272" width="54" height="26" rx="6" fill="#123227" stroke="var(--hud)" stroke-width="2.5"/>
+      <text x="263" y="290" text-anchor="middle" fill="var(--hud)" font-size="12" font-weight="700">定高</text>
+    </g>
+    <text x="263" y="311" text-anchor="middle" class="klbl">保持長開</text>
+    <g class="${H('light')}">
+      <polygon points="130,318 172,318 164,344 138,344" fill="#241a3a" stroke="#b39dff" stroke-width="2.5"/>
+      <text x="151" y="338" text-anchor="middle" fill="#b39dff" font-size="11" font-weight="700">燈色</text>
+    </g>
+    <g class="${H('speed')}">
+      <polygon points="290,318 332,318 324,344 298,344" fill="#3a2a14" stroke="var(--accent)" stroke-width="2.5"/>
+      <text x="311" y="338" text-anchor="middle" fill="var(--accent)" font-size="11" font-weight="700">速度</text>
+    </g>
+    <g class="${H('power')}">
+      <circle cx="230" cy="332" r="17" fill="#0d1526" stroke="#9fb3cc" stroke-width="2.5"/>
+      <path d="M230,322 v10 M223,325 a10,10 0 1 0 14,0" fill="none" stroke="#9fb3cc" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <text x="230" y="368" text-anchor="middle" class="klbl" opacity="0">.</text>
+  </g>`;
+}
+function droneSideMini(color,rotorCls=''){
+  return `<g>
+    <circle r="26" fill="rgba(90,167,255,.10)" stroke="${color}" stroke-width="2.5" class="cageMini"/>
+    <line x1="-17" y1="6" x2="17" y2="6" stroke="#9fb3cc" stroke-width="3.5"/>
+    <rect x="-6" y="-1" width="12" height="8" rx="2" fill="${color}"/>
+    <g transform="translate(-12,-5)" class="${rotorCls}"><g class="rotor"><ellipse rx="9" ry="3" fill="rgba(255,255,255,.4)"/></g></g>
+    <g transform="translate(12,-5)" class="${rotorCls}"><g class="rotor"><ellipse rx="9" ry="3" fill="rgba(255,255,255,.4)"/></g></g>
+  </g>`;
+}
+function droneTopMini(color,cageCls='',coreCls=''){
+  return `<g>
+    <circle r="30" fill="rgba(90,167,255,.10)" stroke="${color}" stroke-width="2.5" class="${cageCls}"/>
+    <line x1="-18" y1="-18" x2="18" y2="18" stroke="#9fb3cc" stroke-width="3"/>
+    <line x1="-18" y1="18" x2="18" y2="-18" stroke="#9fb3cc" stroke-width="3"/>
+    ${[[-18,-18],[18,-18],[-18,18],[18,18]].map(([x,y])=>
+      `<g transform="translate(${x},${y})"><g class="rotor"><ellipse rx="10" ry="3.5" fill="rgba(255,255,255,.4)"/></g></g>`).join('')}
+    <circle r="8" fill="${color}" class="${coreCls}"/>
+    <polygon points="0,-28 6.5,-15 -6.5,-15" fill="var(--accent)"/>
+  </g>`;
+}
+const pane=(inner,cap)=>`<g transform="translate(505,60)">
+  <rect width="278" height="325" rx="16" fill="#0f1727" stroke="#22304a" stroke-width="1.5"/>
+  ${inner}
+  <text x="139" y="308" text-anchor="middle" class="lbl" font-size="12">${cap}</text></g>`;
+const paneGround=`<line x1="20" y1="262" x2="258" y2="262" stroke="#33465f" stroke-width="2.5"/>`;
+const BASE=`<svg viewBox="0 0 800 450">`;
+
+/* ---------- scenes ---------- */
+const S=[];
+
+S.push({label:'序', part:'開場', name:'認識你的遙控器(美國手)', cmd:'雙搖桿+功能鍵', dur:19,
+  lines:[[0,'天穹足球無人機——遙控器按鍵教學'],[3.5,'這是「美國手」遙控器:左搖桿管高度和旋轉'],
+    [8,'右搖桿管前後和左右平移'],[11.5,'中間是對頻點,下方有功能鍵和關機鈕'],
+    [15,'接下來一顆一顆認識它們!']],
+  steps:['左搖桿:上升/下降+左右旋轉','右搖桿:前進/後退+左右平移','中間:對頻點|最下方:關機鈕','四顆功能鍵:緊急關閉/啟動、定高、燈色、速度'],
+  crit:['「美國手」= Mode 2,油門在左手','拿穩遙控器,雙手拇指輕放搖桿上'],
+  stage:`${BASE}
+    ${ctrl('','','',30,40,.95)}
+    <g font-size="14" fill="#d7e1f0">
+      <text x="520" y="105">🕹 左桿:升降・旋轉</text>
+      <text x="520" y="140">🕹 右桿:前後・平移</text>
+      <text x="520" y="175" fill="var(--hud)">◉ 對頻點(中間)</text>
+      <text x="520" y="210" fill="var(--red)">▭ 緊急關閉/啟動</text>
+      <text x="520" y="245" fill="var(--hud)">▭ 定高鈕(保持長開)</text>
+      <text x="520" y="280" fill="#b39dff">◺ 燈色(環裝燈)</text>
+      <text x="520" y="315" fill="var(--accent)">◿ 速度三段+尾燈色</text>
+      <text x="520" y="350" fill="#9fb3cc">⏻ 關機(遊戲結束才關)</text>
+    </g>
+  </svg>`});
+
+S.push({label:'1 開機對頻', part:'STEP 1', name:'開機與對頻(中間對頻點)', cmd:'先開飛機,再開遙控器', dur:20,
+  lines:[[0,'開機與對頻:按下中間的對頻點'],[4,'先開飛機、放平地,再開遙控器對頻'],
+    [8.5,'燈號恆亮,代表連線成功'],[11.5,'重要:對頻完成後,到遊戲結束前'],
+    [15,'遙控器都不要關機!']],
+  steps:['① 先開飛機電源,平放地面','② 再開遙控器','③ 按中間「對頻點」完成對頻','④ 燈號恆亮=連線成功'],
+  crit:['對頻後到遊戲結束,遙控器不關機','關機鈕在最下方,結束才按'],
+  stage:`${BASE}
+    ${ctrl('pair','','',10,40,.9)}
+    ${pane(`
+      <g transform="translate(139,120)">
+        <circle r="26" fill="#0d1526" stroke="#5f7ba8" stroke-width="3"/>
+        <circle r="10" fill="var(--hud)" class="led-pair"/>
+        <circle r="34" fill="none" stroke="var(--hud)" stroke-width="2" class="linkwave"/>
+        <circle r="34" fill="none" stroke="var(--hud)" stroke-width="2" class="linkwave" style="animation-delay:-1s"/>
+      </g>
+      <text x="139" y="185" text-anchor="middle" class="mlbl">閃爍 → 恆亮 = 連線成功</text>
+      <g transform="translate(139,235)"><g class="floaty">${droneSideMini('var(--blue)')}</g></g>
+    `,'先開飛機 → 再開遙控器 → 按對頻點')}
+  </svg>`});
+
+S.push({label:'2 定高鈕', part:'STEP 2', name:'定高鈕(保持長開!)', cmd:'右邊長方形.<b>長開</b>', dur:17,
+  lines:[[0,'定高鈕:右邊這顆長方形按鍵'],[4,'必須保持「長開」狀態'],
+    [7,'定高開著,飛機才會自動鎖住高度'],[10.5,'沒開定高,飛機會亂飛、很難控制!']],
+  steps:['起飛前確認:定高鈕保持「長開」','定高開啟=飛機自動維持高度','放開油門桿,飛機停在原高度懸停'],
+  crit:['沒開定高,飛機會亂飛!','每次起飛前都要檢查一次'],
+  stage:`${BASE}
+    ${ctrl('alt','','',10,40,.9)}
+    ${pane(`
+      ${paneGround}
+      <line x1="30" y1="150" x2="250" y2="150" stroke="var(--hud)" stroke-width="1.5" stroke-dasharray="7 7"/>
+      <text x="36" y="140" class="mlbl">定高線</text>
+      <g transform="translate(90,150)"><g class="mv r-steady">${droneSideMini('var(--hud)')}</g></g>
+      <text x="90" y="192" text-anchor="middle" fill="var(--hud)" font-size="12">定高 ON.穩</text>
+      <g transform="translate(200,170)" opacity=".65"><g class="mv r-wobble">${droneSideMini('var(--red)')}</g></g>
+      <text x="200" y="222" text-anchor="middle" fill="var(--red)" font-size="12">定高 OFF.亂飛</text>
+    `,'定高鈕「長開」,高度自動鎖定')}
+  </svg>`});
+
+S.push({label:'3 左桿升降', part:'左搖桿', name:'上升/下降(油門)', cmd:'上推=升.下拉=降', dur:17,
+  lines:[[0,'左搖桿(上下):控制上升與下降'],[4,'上推——上升;下拉——下降'],
+    [7.5,'打桿要小幅、緩慢,像捏著雞蛋'],[11.5,'放開搖桿自動回中,維持懸停']],
+  steps:['上推:上升|下拉:下降','小幅、緩慢打桿','放開自動回中=懸停'],
+  crit:['對應第 1 題:起飛與定點懸停','猛推油門會衝太高,輕輕帶桿'],
+  stage:`${BASE}
+    ${ctrl('stickL','k-ud','',10,40,.9)}
+    ${pane(`
+      ${paneGround}
+      <line x1="30" y1="110" x2="250" y2="110" stroke="#33465f" stroke-width="1" stroke-dasharray="4 7"/>
+      <line x1="30" y1="190" x2="250" y2="190" stroke="#33465f" stroke-width="1" stroke-dasharray="4 7"/>
+      <text x="240" y="100" text-anchor="end" class="klbl">高</text>
+      <text x="240" y="250" text-anchor="end" class="klbl">低</text>
+      <g transform="translate(139,255)"><g class="mv r-ud">${droneSideMini('var(--blue)')}</g></g>
+    `,'左桿上推 ↑ 上升|下拉 ↓ 下降')}
+  </svg>`});
+
+S.push({label:'4 左桿旋轉', part:'左搖桿', name:'左右旋轉(Yaw)', cmd:'左打=左旋.右打=右旋', dur:15,
+  lines:[[0,'左搖桿(左右):控制機頭旋轉'],[3.5,'左打——向左旋轉;右打——向右旋轉'],
+    [8,'第 2 題四方位旋轉:每次轉 90 度停 3 秒']],
+  steps:['左打:機頭左轉|右打:機頭右轉','眼睛跟著機頭(橘色標記)走'],
+  crit:['對應第 2 題:四方位旋轉','轉 90° 就停,不要一直轉'],
+  stage:`${BASE}
+    ${ctrl('stickL','k-lr','',10,40,.9)}
+    ${pane(`
+      <text x="139" y="60" text-anchor="middle" class="klbl">機頭方向 = 橘色標記</text>
+      <path d="M70,110 A85,85 0 0 1 208,110" fill="none" stroke="#33465f" stroke-width="1.5" stroke-dasharray="4 7"/>
+      <g transform="translate(139,170)"><g class="mv r-yaw">${droneTopMini('var(--blue)')}</g></g>
+    `,'左打 ↶ 左旋|右打 ↷ 右旋')}
+  </svg>`});
+
+S.push({label:'5 右桿前後', part:'右搖桿', name:'前進/後退(Pitch)', cmd:'上推=前.下拉=後', dur:15,
+  lines:[[0,'右搖桿(上下):控制前進與後退'],[4,'上推——前進;下拉——後退'],
+    [7.5,'急停技巧:反向推桿,再快速回中!']],
+  steps:['上推:前進|下拉:後退','急停:反向推桿 → 回中'],
+  crit:['對應第 3 題前後移動、第 6 題急停','航跡走直線,眼睛顧好機頭方向'],
+  stage:`${BASE}
+    ${ctrl('stickR','','k-ud',10,40,.9)}
+    ${pane(`
+      <text x="139" y="70" text-anchor="middle" fill="var(--accent)" font-size="14" font-weight="700">前</text>
+      <text x="139" y="278" text-anchor="middle" class="lbl" font-size="14">後</text>
+      <line x1="139" y1="80" x2="139" y2="260" stroke="#33465f" stroke-width="1.5" stroke-dasharray="4 7"/>
+      <g transform="translate(139,170)"><g class="mv r-fb">${droneTopMini('var(--blue)')}</g></g>
+    `,'上推 ↑ 前進|下拉 ↓ 後退')}
+  </svg>`});
+
+S.push({label:'6 右桿平移', part:'右搖桿', name:'左右平移(Roll)', cmd:'左打=左移.右打=右移', dur:16,
+  lines:[[0,'右搖桿(左右):控制左右平移'],[3.5,'左打——左平移;右打——右平移'],
+    [7,'記住:機頭不轉,機身平移'],[10.5,'這就是側飛(Roll)的感覺']],
+  steps:['左打:左平移|右打:右平移','機頭保持朝前,機身橫著滑'],
+  crit:['對應第 4 題:左右側飛','重點觀念:機頭方向 ≠ 移動方向'],
+  stage:`${BASE}
+    ${ctrl('stickR','','k-lr',10,40,.9)}
+    ${pane(`
+      <line x1="40" y1="170" x2="238" y2="170" stroke="#33465f" stroke-width="1.5" stroke-dasharray="4 7"/>
+      <text x="34" y="150" class="lbl" font-size="13">左</text>
+      <text x="232" y="150" class="lbl" font-size="13">右</text>
+      <text x="139" y="70" text-anchor="middle" class="klbl">機頭一直朝前 ↑</text>
+      <g transform="translate(139,170)"><g class="mv r-side">${droneTopMini('var(--blue)')}</g></g>
+    `,'機頭不轉,機身左右平移')}
+  </svg>`});
+
+S.push({label:'7 緊急關閉', part:'功能鍵', name:'緊急關閉/啟動鈕(左長方形)', cmd:'危險=立刻按!', dur:19,
+  lines:[[0,'左邊長方形:緊急關閉與啟動鈕'],[4,'按一下:啟動馬達;再按:緊急關閉'],
+    [8,'危險時——纏網、快撞到人——立刻按下!'],[12,'第 10 題:落地後 1 秒內完成斷電'],
+    [15.5,'注意:空中斷電會直接墜落']],
+  steps:['按一下:啟動(馬達轉動)','再按一下:緊急關閉(停槳)','落地後 1 秒內斷電=第 10 題滿分'],
+  crit:['空中斷電會直接墜落,危險時才用','斷電是保護自己和隊友的動作'],
+  stage:`${BASE}
+    ${ctrl('estop','','',10,40,.9)}
+    ${pane(`
+      ${paneGround}
+      <g transform="translate(110,255)"><g class="mv r-drop">
+        <g><circle r="26" fill="rgba(255,90,110,.12)" stroke="var(--red)" stroke-width="2.5"/>
+        <line x1="-17" y1="6" x2="17" y2="6" stroke="#9fb3cc" stroke-width="3.5"/>
+        <rect x="-6" y="-1" width="12" height="8" rx="2" fill="var(--red)"/>
+        <g transform="translate(-12,-5)" class="r-droprotor"><g class="rotor"><ellipse rx="9" ry="3" fill="rgba(255,255,255,.4)"/></g></g>
+        <g transform="translate(12,-5)" class="r-droprotor"><g class="rotor"><ellipse rx="9" ry="3" fill="rgba(255,255,255,.4)"/></g></g></g>
+      </g></g>
+      <g class="r-off">
+        <rect x="170" y="150" width="80" height="56" rx="10" fill="rgba(255,90,110,.12)" stroke="var(--red)" stroke-width="2"/>
+        <text x="210" y="185" text-anchor="middle" fill="var(--red)" font-size="18" font-weight="700" font-family="Consolas">OFF</text>
+      </g>
+    `,'按下 STOP → 停槳斷電')}
+  </svg>`});
+
+S.push({label:'8 速度三段', part:'功能鍵', name:'速度切換(右下梯形)', cmd:'1聲最慢.3聲最快', dur:17,
+  lines:[[0,'右下方梯形:速度切換鍵,共三段'],[4.5,'一聲——最慢;兩聲——中速;三聲——最快'],
+    [9,'新手從一段開始,比賽再用三段'],[12.5,'這顆也能切換六顆尾燈的顏色']],
+  steps:['按一下切換一段,聽提示音數','1 聲=最慢|2 聲=中速|3 聲=最快','同一顆鍵也可切換六顆尾燈顏色'],
+  crit:['新手用一段練穩,再慢慢加速','比賽前確認檔位,不要用錯速度'],
+  stage:`${BASE}
+    ${ctrl('speed','','',10,40,.9)}
+    ${pane(`
+      <g font-family="Consolas" font-size="15" font-weight="700">
+        <g class="beep1"><rect x="30" y="70" width="66" height="34" rx="8" fill="rgba(79,227,163,.12)" stroke="var(--hud)" stroke-width="2"/>
+          <text x="63" y="93" text-anchor="middle" fill="var(--hud)">♪×1</text></g>
+        <g class="beep2"><rect x="106" y="70" width="66" height="34" rx="8" fill="rgba(255,209,102,.12)" stroke="var(--gold)" stroke-width="2"/>
+          <text x="139" y="93" text-anchor="middle" fill="var(--gold)">♪×2</text></g>
+        <g class="beep3"><rect x="182" y="70" width="66" height="34" rx="8" fill="rgba(255,90,110,.12)" stroke="var(--red)" stroke-width="2"/>
+          <text x="215" y="93" text-anchor="middle" fill="var(--red)">♪×3</text></g>
+      </g>
+      <text x="63" y="124" text-anchor="middle" class="klbl">最慢</text>
+      <text x="139" y="124" text-anchor="middle" class="klbl">中速</text>
+      <text x="215" y="124" text-anchor="middle" class="klbl">最快</text>
+      <g class="spd-dash" stroke="var(--accent)" stroke-width="3" stroke-linecap="round">
+        <line x1="40" y1="185" x2="80" y2="185"/><line x1="34" y1="200" x2="88" y2="200"/><line x1="42" y1="215" x2="78" y2="215"/>
+      </g>
+      <g transform="translate(160,200)"><g class="floaty">${droneSideMini('var(--blue)')}</g></g>
+      <text x="139" y="260" text-anchor="middle" class="klbl">尾燈 × 6 顆顏色也用這顆切換</text>
+    `,'一段一段加速,先求穩再求快')}
+  </svg>`});
+
+S.push({label:'9 燈色', part:'功能鍵', name:'環裝燈色(左下梯形)', cmd:'燈色=分隊識別', dur:14,
+  lines:[[0,'左下方梯形:更換環裝燈的顏色'],[4,'比賽時用燈色分隊:藍隊、紅隊'],
+    [8,'選好顏色,才不會踢錯球門!']],
+  steps:['按一下換一種環裝燈顏色','開賽前全隊統一燈色'],
+  crit:['燈色=隊伍識別,別和對手同色','搭配速度鍵可換六顆尾燈顏色'],
+  stage:`${BASE}
+    ${ctrl('light','','',10,40,.9)}
+    ${pane(`
+      <g transform="translate(139,165)">${droneTopMini('var(--blue)','lcage','lcore')}</g>
+      <g transform="translate(139,165)"><circle r="44" fill="none" stroke-width="2" stroke-dasharray="5 7" class="lcage" opacity=".55"/></g>
+      <text x="139" y="250" text-anchor="middle" class="klbl">藍 → 紅 → 綠 循環切換</text>
+    `,'環裝燈變色=你的隊伍顏色')}
+  </svg>`});
+
+S.push({label:'10 完整流程', part:'總演練', name:'完整流程.跟著做一次', cmd:'開機→對頻→起飛→斷電', dur:23,
+  lines:[[0,'完整流程,跟著做一次!'],[3,'① 開飛機 → ② 開遙控器,按對頻點'],
+    [8,'③ 確認定高鈕長開 → ④ 按啟動鈕'],[12.5,'⑤ 左桿上推起飛 → 完成任務'],
+    [16,'⑥ 降落 → 緊急關閉鈕斷電'],[19,'遊戲結束前,遙控器不關機!']],
+  steps:['開飛機 → 開遙控器 → 對頻','定高長開 → 啟動 → 起飛','任務 → 降落 → 斷電'],
+  crit:['順序記熟,安全有保障','關機鈕:遊戲全部結束才按'],
+  stage:`${BASE}
+    ${ctrl('','k-updown-once','',10,40,.9)}
+    ${pane(`
+      <g font-size="13">
+        ${['① 開飛機電源','② 開遙控器.對頻','③ 定高鈕長開','④ 啟動鈕(馬達轉)','⑤ 上推油門.起飛','⑥ 任務完成.降落','⑦ 斷電(遊戲末關機)']
+          .map((t,i)=>`<text x="28" y="${62+i*26}" class="fstep" style="animation-delay:${i*20/7}s">${t}</text>`).join('')}
+      </g>
+      ${paneGround.replace('y1="262"','y1="262"')}
+      <g transform="translate(210,252)"><g class="mv f-drone">
+        <g><circle r="22" fill="rgba(90,167,255,.10)" stroke="var(--blue)" stroke-width="2.5"/>
+        <line x1="-14" y1="5" x2="14" y2="5" stroke="#9fb3cc" stroke-width="3"/>
+        <rect x="-5" y="-1" width="10" height="7" rx="2" fill="var(--blue)"/>
+        <g transform="translate(-10,-4)" class="f-rotor"><g class="rotor"><ellipse rx="8" ry="2.5" fill="rgba(255,255,255,.4)"/></g></g>
+        <g transform="translate(10,-4)" class="f-rotor"><g class="rotor"><ellipse rx="8" ry="2.5" fill="rgba(255,255,255,.4)"/></g></g></g>
+      </g></g>
+    `,'七步驟循環演示')}
+  </svg>`});
+
+S.push({label:'結', part:'結語', name:'安全守則', cmd:'安全第一', dur:15,
+  lines:[[0,'安全三守則:先檢查、再起飛'],[4,'人不站在航線上;落地立刻斷電'],
+    [8.5,'拿起遙控器,進場練習吧!']],
+  steps:['起飛前:電量、定高鈕、環境檢查','飛行中:人不站航線上','降落後:1 秒內斷電'],
+  crit:['安全・責任・團隊合作','搭配「十題流程拆解」影片一起練!'],
+  stage:`${BASE}
+    <text x="400" y="130" text-anchor="middle" fill="var(--gold)" font-size="26" font-weight="700">🛡 安全三守則</text>
+    <text x="400" y="180" text-anchor="middle" fill="#fff" font-size="18">先檢查.再起飛|人不站航線|落地即斷電</text>
+    <g transform="translate(320,290)"><g class="floaty">${droneTopMini('var(--blue)')}</g></g>
+    <g transform="translate(480,290)"><g class="floaty" style="animation-delay:-1.7s">${droneTopMini('var(--red)')}</g></g>
+    <text x="400" y="400" text-anchor="middle" fill="var(--hud)" font-size="18" font-weight="700">拿起遙控器,進場練習吧!⚽</text>
+  </svg>`});
+
+/* ---------- player engine ---------- */
+const stage=document.getElementById('stage'), subtitle=document.getElementById('subtitle'),
+  partEl=document.getElementById('part'), tnameEl=document.getElementById('tname'),
+  cmdEl=document.getElementById('cmd'), stepsEl=document.getElementById('steps'),
+  critEl=document.getElementById('crit'), chipsEl=document.getElementById('chips'),
+  tlEl=document.getElementById('timeline'), tdisp=document.getElementById('tdisp'),
+  playbtn=document.getElementById('playbtn'), bigplay=document.getElementById('bigplay'),
+  voicebtn=document.getElementById('voicebtn');
+
+let idx=0,t=0,lineIdx=-1,playing=false,voice=true,started=false,raf=null,last=0;
+let rate=parseFloat(localStorage.getItem('droneVidRate')||'0.9');
+let voiceName=localStorage.getItem('droneVidVoice')||'';
+const total=S.reduce((a,s)=>a+s.dur,0);
+
+S.forEach((s,i)=>{
+  const c=document.createElement('button');c.className='chip';
+  c.innerHTML=/^\d/.test(s.label)?`<span class="n">${s.label.split(' ')[0]}</span>${s.label.split(' ').slice(1).join(' ')}`:s.label;
+  c.onclick=()=>{jump(i);};chipsEl.appendChild(c);
+  const seg=document.createElement('div');seg.className='seg';seg.style.flexGrow=s.dur;
+  seg.innerHTML='<div class="fill"></div>';seg.onclick=()=>jump(i);tlEl.appendChild(seg);
+});
+const chips=[...chipsEl.children], segs=[...tlEl.children];
+
+function fmt(x){x=Math.max(0,Math.round(x));return Math.floor(x/60)+':'+String(x%60).padStart(2,'0')}
+function zhVoice(){const v=speechSynthesis.getVoices();
+  return v.find(x=>/zh[-_]TW/i.test(x.lang))||v.find(x=>/^zh/i.test(x.lang))||null}
+function speak(txt){
+  if(!voice||!('speechSynthesis' in window))return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(txt.replace(/[——]/g,',').replace(/[⚽!!]/g,'。'));
+  const vs=speechSynthesis.getVoices();
+  const v=vs.find(x=>x.name===voiceName)||zhVoice();
+  if(v)u.voice=v; u.lang='zh-TW'; u.rate=rate;
+  speechSynthesis.speak(u);
+}
+function setPausedVisual(p){
+  stage.classList.toggle('paused',p);
+  stage.querySelectorAll('svg').forEach(sv=>{try{p?sv.pauseAnimations():sv.unpauseAnimations()}catch(e){}});
+}
+function enter(i){
+  idx=i;t=0;lineIdx=-1;const s=S[i];
+  stage.innerHTML=s.stage;
+  partEl.textContent=s.part;tnameEl.textContent=s.name;cmdEl.innerHTML=s.cmd;
+  stepsEl.innerHTML=s.steps.map(x=>`<li>${x}</li>`).join('');
+  critEl.innerHTML=s.crit.map(x=>`<li>${x}</li>`).join('');
+  subtitle.textContent='';
+  chips.forEach((c,k)=>c.classList.toggle('cur',k===i));
+  chips[i].scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
+  segs.forEach((sg,k)=>{sg.classList.toggle('done',k<i);sg.querySelector('.fill').style.width='0%'});
+  if('speechSynthesis' in window)speechSynthesis.cancel();
+  if(!playing)setPausedVisual(true);
+}
+function jump(i){enter(i);if(!started){started=true;bigplay.classList.add('hide')}if(!playing)togglePlay(true);}
+function updateHUD(){
+  const s=S[idx];
+  let li=-1;for(let k=0;k<s.lines.length;k++)if(t>=s.lines[k][0])li=k;
+  if(li!==lineIdx){lineIdx=li;const txt=li>=0?s.lines[li][1]:'';subtitle.textContent=txt;if(txt)speak(txt);}
+  segs[idx].querySelector('.fill').style.width=Math.min(100,t/s.dur*100)+'%';
+  const el=S.slice(0,idx).reduce((a,x)=>a+x.dur,0)+t;
+  tdisp.textContent=fmt(el)+' / '+fmt(total);
+}
+function loop(ts){
+  if(!playing)return;
+  const dt=Math.min(.1,(ts-last)/1000);last=ts;
+  t+=dt*(voice?rate/1.05:1); /* 語速慢,影片節奏跟著放慢 */
+  if(t>=S[idx].dur){
+    if(idx<S.length-1){enter(idx+1);}
+    else{togglePlay(false);t=S[idx].dur;updateHUD();return;}
+  }
+  updateHUD();raf=requestAnimationFrame(loop);
+}
+function togglePlay(force){
+  const want=typeof force==='boolean'?force:!playing;
+  if(want===playing)return;
+  playing=want;
+  playbtn.textContent=playing?'⏸':'▶';
+  setPausedVisual(!playing);
+  if(playing){
+    if('speechSynthesis' in window){try{speechSynthesis.resume()}catch(e){}}
+    last=performance.now();raf=requestAnimationFrame(loop);
+  }else{
+    cancelAnimationFrame(raf);
+    if('speechSynthesis' in window){try{speechSynthesis.pause()}catch(e){}}
+  }
+}
+bigplay.onclick=()=>{
+  started=true;bigplay.classList.add('hide');
+  if('speechSynthesis' in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(' '));}
+  togglePlay(true);
+};
+playbtn.onclick=()=>{if(!started){bigplay.onclick();return}togglePlay();};
+document.getElementById('prev').onclick=()=>jump(Math.max(0,idx-1));
+document.getElementById('next').onclick=()=>jump(Math.min(S.length-1,idx+1));
+voicebtn.onclick=()=>{voice=!voice;voicebtn.textContent=voice?'🔊':'🔇';
+  if(!voice&&'speechSynthesis' in window)speechSynthesis.cancel();};
+const rateEl=document.getElementById('rate'),ratelab=document.getElementById('ratelab'),
+  vsel=document.getElementById('voicesel');
+function showRate(){ratelab.textContent='語速 '+(+rate.toFixed(2))+'x';}
+rateEl.value=rate;showRate();
+rateEl.oninput=()=>{rate=parseFloat(rateEl.value);showRate();localStorage.setItem('droneVidRate',rate);};
+rateEl.onchange=()=>{if(lineIdx>=0&&voice&&playing)speak(S[idx].lines[lineIdx][1]);};
+function popVoices(){
+  if(!('speechSynthesis' in window))return;
+  const vs=speechSynthesis.getVoices().filter(x=>/^zh/i.test(x.lang));
+  vsel.innerHTML='<option value="">自動(中文)</option>'+
+    vs.map(x=>`<option value="${x.name}">${x.name.replace(/^(Microsoft|Google|Apple)\s*/i,'').replace(/[((].*$/,'')}</option>`).join('');
+  vsel.value=vs.some(x=>x.name===voiceName)?voiceName:'';
+}
+vsel.onchange=()=>{voiceName=vsel.value;localStorage.setItem('droneVidVoice',voiceName);
+  if(lineIdx>=0&&voice&&playing)speak(S[idx].lines[lineIdx][1]);};
+if('speechSynthesis' in window){popVoices();speechSynthesis.onvoiceschanged=popVoices;}
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space'){e.preventDefault();playbtn.onclick();}
+  if(e.code==='ArrowRight')document.getElementById('next').onclick();
+  if(e.code==='ArrowLeft')document.getElementById('prev').onclick();
+});
+if('speechSynthesis' in window)speechSynthesis.getVoices();
+enter(0);setPausedVisual(true);
+</script>
+
+</body>
+</html>
+
