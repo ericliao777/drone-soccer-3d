@@ -17,8 +17,10 @@ const camPos=new THREE.Vector3(), camTgt=new THREE.Vector3();
 let camSnap=true;
 const pools={};
 let lastBall=null;                        // 本幀來球(HUD 邊緣箭頭用)
-let sceneryGrp=null, sceneryOn=true;      // 體育館場景開關
+let sceneryGrp=null, sceneryOn=true;      // 體育館場景+高畫質開關
 let floorMesh,gridMat,turfTex,darkTex,boundMat;
+let composer=null,bloomPass=null;         // 後製(Bloom 泛光,r147 examples/js)
+let dirLight=null,shadowCatcher=null;     // 陰影
 
 /* ---------- color util:'#rgb(a)' / 'rgba()' → hex+alpha ---------- */
 function parseColor(str){
@@ -164,7 +166,20 @@ function buildArena(){
   });
   // lights
   scene3.add(new THREE.HemisphereLight(0x8fa8c8,0x1a2536,1.05));
-  const dl=new THREE.DirectionalLight(0xffffff,.5); dl.position.set(3,6,2); scene3.add(dl);
+  dirLight=new THREE.DirectionalLight(0xfff2e0,.62); dirLight.position.set(3,6,2);
+  dirLight.castShadow=true;
+  dirLight.shadow.mapSize.set(1024,1024);
+  dirLight.shadow.camera.left=-4.2; dirLight.shadow.camera.right=4.2;
+  dirLight.shadow.camera.top=4.2; dirLight.shadow.camera.bottom=-4.2;
+  dirLight.shadow.camera.near=1; dirLight.shadow.camera.far=16;
+  dirLight.shadow.bias=-0.002;
+  scene3.add(dirLight);
+  // 陰影接收面(ShadowMaterial:只顯示陰影,不影響地板配色)
+  shadowCatcher=new THREE.Mesh(new THREE.PlaneGeometry(H*2+1.2,H*2+1.2),
+    new THREE.ShadowMaterial({opacity:.3}));
+  shadowCatcher.rotation.x=-Math.PI/2; shadowCatcher.position.y=0.007;
+  shadowCatcher.receiveShadow=true; shadowCatcher.renderOrder=1;
+  scene3.add(shadowCatcher);
 }
 
 /* =========================================================
@@ -255,7 +270,7 @@ function buildScenery(){
   [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(p=>{
     const tower=new THREE.Group();
     const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.1,4.8,8),poleMat);
-    pole.position.y=2.4; tower.add(pole);
+    pole.position.y=2.4; pole.castShadow=true; tower.add(pole);
     const head=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.28,0.12),
       new THREE.MeshBasicMaterial({color:0xfff6d6}));
     head.position.y=4.8; head.lookAt(0,0,0); tower.add(head);
@@ -283,6 +298,15 @@ function applyScenery(){
   if(boundMat) boundMat.opacity=sceneryOn?.6:.4;
   if(scene3&&scene3.fog){ scene3.fog.near=sceneryOn?12:7; scene3.fog.far=sceneryOn?34:15; }
   renderer.setClearColor(sceneryOn?0x05080f:0x0a0f16);
+  // 高畫質 = ACES 色調映射 + 即時陰影 + Bloom(render 時判斷)
+  renderer.toneMapping=sceneryOn?THREE.ACESFilmicToneMapping:THREE.NoToneMapping;
+  renderer.toneMappingExposure=1.18;
+  renderer.shadowMap.enabled=sceneryOn;
+  if(shadowCatcher) shadowCatcher.visible=sceneryOn;
+  // toneMapping / shadowMap 改變需要重編譯 shader
+  scene3.traverse(o=>{
+    if(o.material){ (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ m.needsUpdate=true; }); }
+  });
   const b=$('btnScenery');
   if(b) b.textContent=sceneryOn?'🏟️ 場景:開':'🏟️ 場景:關';
 }
@@ -367,10 +391,11 @@ function buildDrone(){
   droneGrp.add(new THREE.Mesh(new THREE.SphereGeometry(CAGE,14,10),cageMat));
   const body=new THREE.Mesh(new THREE.SphereGeometry(0.07,12,10),
     new THREE.MeshLambertMaterial({color:0x2a3b52}));
-  body.scale.y=0.6; droneGrp.add(body);
+  body.scale.y=0.6; body.castShadow=true; droneGrp.add(body);
   const nose=new THREE.Mesh(new THREE.ConeGeometry(0.05,0.11,10),
     new THREE.MeshBasicMaterial({color:0xff8a3c}));
   nose.rotation.x=-Math.PI/2; nose.position.set(0,0,-0.13);
+  nose.castShadow=true;
   droneGrp.add(nose);
   const armMat=new THREE.MeshLambertMaterial({color:0x223148});
   const propMat=new THREE.MeshBasicMaterial({color:0xe9f1f7,transparent:true,opacity:.7});
@@ -501,10 +526,10 @@ function initPools(){
     const root=new THREE.Group();
     const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.06,1.3,12),
       new THREE.MeshLambertMaterial({color:0xa78bfa}));
-    pole.position.y=0.65;
+    pole.position.y=0.65; pole.castShadow=true;
     const cap=new THREE.Mesh(new THREE.SphereGeometry(0.08,12,10),
       new THREE.MeshBasicMaterial({color:0xa78bfa}));
-    cap.position.y=1.32;
+    cap.position.y=1.32; cap.castShadow=true;
     const base=new THREE.Mesh(new THREE.RingGeometry(0.1,0.15,24),
       new THREE.MeshBasicMaterial({color:0xa78bfa,transparent:true,opacity:.5,side:THREE.DoubleSide,depthWrite:false}));
     base.rotation.x=-Math.PI/2; base.position.y=0.018; base.renderOrder=5;
@@ -517,10 +542,10 @@ function initPools(){
     const H=2.1;
     [-0.8,0.8].forEach(x=>{
       const post=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,H,10),mat);
-      post.position.set(x,H/2,0); root.add(post);
+      post.position.set(x,H/2,0); post.castShadow=true; root.add(post);
     });
     const bar=new THREE.Mesh(new THREE.BoxGeometry(1.65,0.05,0.05),mat);
-    bar.position.set(0,H,0); root.add(bar);
+    bar.position.set(0,H,0); bar.castShadow=true; root.add(bar);
     // net
     const ncv=document.createElement('canvas'); ncv.width=128; ncv.height=128;
     const nc=ncv.getContext('2d');
@@ -554,6 +579,7 @@ function initPools(){
     const root=new THREE.Group();
     const sph=new THREE.Mesh(new THREE.SphereGeometry(0.1,16,12),
       new THREE.MeshLambertMaterial({color:0xff5c5c}));
+    sph.castShadow=true;
     const ringM=new THREE.Mesh(new THREE.TorusGeometry(0.17,0.01,8,32),
       new THREE.MeshBasicMaterial({transparent:true,opacity:.9,depthWrite:false}));
     ringM.rotation.x=Math.PI/2;
@@ -910,6 +936,7 @@ function resize(){
   const dpr=Math.min(2,window.devicePixelRatio||1);
   renderer.setPixelRatio(dpr);
   renderer.setSize(r.width,r.height,false);
+  if(composer){ composer.setPixelRatio(dpr); composer.setSize(r.width,r.height); }
   camera.aspect=r.width/r.height;
   camera.updateProjectionMatrix();
   hudW=r.width; hudH=r.height;
@@ -921,9 +948,21 @@ function init(){
   container=glCv.parentElement;
   renderer=new THREE.WebGLRenderer({canvas:glCv,antialias:true});
   renderer.setClearColor(0x0a0f16);
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   scene3=new THREE.Scene();
   scene3.fog=new THREE.Fog(0x0a0f16,7,15);
   camera=new THREE.PerspectiveCamera(72,16/10,0.02,60);
+  // Bloom 後製鏈(three-post.js 未載入時自動退回直接渲染)
+  try{
+    if(THREE.EffectComposer&&THREE.UnrealBloomPass){
+      const rt=new THREE.WebGLRenderTarget(4,4,{depthBuffer:true,stencilBuffer:false});
+      rt.samples=4;   // WebGL2 MSAA;WebGL1 自動忽略
+      composer=new THREE.EffectComposer(renderer,rt);
+      composer.addPass(new THREE.RenderPass(scene3,camera));
+      bloomPass=new THREE.UnrealBloomPass(new THREE.Vector2(4,4),0.42,0.4,0.68);
+      composer.addPass(bloomPass);
+    }
+  }catch(e){ composer=null; }
   buildArena();
   buildScenery();
   buildDrone();
@@ -947,7 +986,8 @@ function render(dt){
   updateDrone(dt);
   updateParticles(dt);
   updateCamera(dt);
-  renderer.render(scene3,camera);
+  if(sceneryOn&&composer) composer.render();
+  else renderer.render(scene3,camera);
   drawHUD();
 }
 return {init,render,resize,setView,cycleView,get viewMode(){return viewMode;}};
