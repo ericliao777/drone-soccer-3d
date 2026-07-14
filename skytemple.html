@@ -112,8 +112,10 @@
       <div><b>射擊</b>|全自動,專心閃避就好</div>
       <div><b>炸彈</b>|X 或 空白鍵・清除全畫面彈幕</div>
       <div><b>武器</b>|🔴 火神炮:寬扇面・🔵 雷射:貫穿高傷</div>
+      <div style="grid-column:1/-1"><b>⭕ 訓練環</b>|操縱無人機穿過金環=連鎖加分,每連鎖 3 環送 1 顆炸彈!漏掉就斷鏈</div>
     </div>
-    <button class="go" id="btnStart">出 擊</button>
+    <div id="stageSel" style="display:flex; gap:8px; justify-content:center; margin:0 0 18px; flex-wrap:wrap"></div>
+    <button class="go" id="btnStart">出 擊(STAGE 1)</button>
     <div class="credit">紀念碑谷風格美術致敬・雷電式縱向捲軸射擊|最高分保存於本機<br><a href="index.html">回首頁</a></div>
   </div>
 </div>
@@ -155,12 +157,52 @@ const PAL={
   lav:0x8a68d4, gold:0xffbe3d, ink:0x3d3352, white:0xfffaf2, coral:0xff6d4a,
   bulletP:0xff9a3c, bulletL:0x3ce8ff, bulletE:0xff4f9e, core:0xfff2e8
 };
-/* 三段色域(隨關卡推進漸變):天頂 / 地平 / 霧 */
-const ZONES=[
-  {top:0xffb37c, bot:0xe86a8a, fog:0xf0a08c, hemiS:0xfff0d8, hemiG:0xd4738e},
-  {top:0x63d4c4, bot:0xffd48a, fog:0xa8d8c2, hemiS:0xf2fff4, hemiG:0x6aada0},
-  {top:0x7a5cc9, bot:0xff8a6a, fog:0xa886c4, hemiS:0xf2e4ff, hemiG:0x7a68a8}
+/* ---------------- 和弦(BGM 用) ---------------- */
+const CH_C=[261.63,329.63,392.00], CH_Am=[220.00,261.63,329.63], CH_F=[174.61,220.00,261.63],
+      CH_G=[196.00,246.94,293.66], CH_Em=[164.81,196.00,246.94], CH_Dm=[146.83,174.61,220.00],
+      CH_Bb=[116.54,146.83,174.61], CH_A=[110.00,138.59,164.81];
+
+/* =========================================================
+   STAGES — 三關:場景/色域/音樂/難度全部不同
+   ========================================================= */
+const STAGES=[
+{ name:'天空聖殿', len:300, scroll:4.6,
+  bossHp:170, bossName:'GUARDIAN OF THE TEMPLE', bossTint:0x8a68d4,
+  diff:{spd:1,rate:1},
+  zones:[
+    {top:0xffb37c, bot:0xe86a8a, fog:0xf0a08c, hemiS:0xfff0d8, hemiG:0xd4738e},
+    {top:0x63d4c4, bot:0xffd48a, fog:0xa8d8c2, hemiS:0xf2fff4, hemiG:0x6aada0},
+    {top:0x7a5cc9, bot:0xff8a6a, fog:0xa886c4, hemiS:0xf2e4ff, hemiG:0x7a68a8}],
+  music:{tempo:430, bell:'sine', perc:false, chords:[CH_C,CH_Am,CH_F,CH_G]},
+  scn:{pathA:0xf7e8d0, pathB:0xe0c49e, trim:0xffbe3d, sideA:0xe25f92, sideB:0x2fb5a8,
+       colonnade:false, brazier:false, cloudN:11, spacing:16}
+},
+{ name:'雲海迴廊', len:320, scroll:5.4,
+  bossHp:240, bossName:'WARDEN OF THE CLOUDS', bossTint:0x1e968c,
+  diff:{spd:1.15,rate:.85},
+  zones:[
+    {top:0x8fd8ff, bot:0xeaf8ff, fog:0xbfe4ef, hemiS:0xffffff, hemiG:0x7fa8c8},
+    {top:0x53cabe, bot:0xf2fff4, fog:0x9ed4c8, hemiS:0xf2fff4, hemiG:0x64a89a},
+    {top:0x3a80cc, bot:0xbfe0f4, fog:0x84b0d4, hemiS:0xe8f4ff, hemiG:0x5580a8}],
+  music:{tempo:385, bell:'triangle', perc:false, chords:[CH_Am,CH_G,CH_F,CH_Em]},
+  scn:{pathA:0xeaf4f2, pathB:0xc4ded4, trim:0x2fd8c8, sideA:0x2fb5a8, sideB:0x5a9ee8,
+       colonnade:true, brazier:false, cloudN:20, spacing:14}
+},
+{ name:'黃昏天城', len:340, scroll:6.0,
+  bossHp:300, bossName:'EMPEROR OF DUSK', bossTint:0xc44536,
+  diff:{spd:1.3,rate:.72},
+  zones:[
+    {top:0xff9e42, bot:0xd4527a, fog:0xd8825e, hemiS:0xffe4c0, hemiG:0xb0628a},
+    {top:0xc4508a, bot:0xff8a5a, fog:0xb0688e, hemiS:0xffd8e4, hemiG:0x945480},
+    {top:0x3f3572, bot:0xc4548a, fog:0x635086, hemiS:0xd4c4f4, hemiG:0x504070}],
+  music:{tempo:345, bell:'square', perc:true, chords:[CH_Dm,CH_Bb,CH_C,CH_A]},
+  scn:{pathA:0x5c4a78, pathB:0x483a60, trim:0xffbe3d, sideA:0xc44536, sideB:0x8a68d4,
+       colonnade:false, brazier:true, cloudN:6, spacing:12}
+}
 ];
+let curStage=0, DIFF={spd:1,rate:1};
+let unlocked=0;
+try{ unlocked=Math.min(2,+localStorage.getItem('skyTempleStg')||0); }catch(e){}
 
 /* ---------------- renderer / camera ---------------- */
 const canvas=$('gl');
@@ -196,7 +238,7 @@ function resize(){
 addEventListener('resize',resize); resize();
 
 /* ---------------- lights & backdrop ---------------- */
-const hemi=new THREE.HemisphereLight(ZONES[0].hemiS,ZONES[0].hemiG,.7); scene.add(hemi);
+const hemi=new THREE.HemisphereLight(STAGES[0].zones[0].hemiS,STAGES[0].zones[0].hemiG,.7); scene.add(hemi);
 /* 冷色補光(從另一側,讓立面出現暖冷對比 → 立體感) */
 const fill=new THREE.DirectionalLight(0x9db8ff,.28); fill.position.set(16,10,-8); scene.add(fill);
 const sunL=new THREE.DirectionalLight(0xffe2b8,.62);
@@ -209,7 +251,7 @@ sunL.shadow.camera.near=1; sunL.shadow.camera.far=80;
 sunL.shadow.bias=-0.0015;
 scene.add(sunL);
 /* 漸層天幕(頂點色大平面,遠景) */
-let bgTopC=new THREE.Color(ZONES[0].top), bgBotC=new THREE.Color(ZONES[0].bot);
+let bgTopC=new THREE.Color(STAGES[0].zones[0].top), bgBotC=new THREE.Color(STAGES[0].zones[0].bot);
 const bgGeo=new THREE.PlaneGeometry(400,240);
 {
   const cols=new Float32Array(4*3);
@@ -229,10 +271,11 @@ function paintBackdrop(){
   bgGeo.attributes.color.needsUpdate=true;
 }
 paintBackdrop();
-scene.fog=new THREE.Fog(ZONES[0].fog,55,140);
-function applyZone(f){ // f: 0..1 關卡進度 → 色域漸變
+scene.fog=new THREE.Fog(STAGES[0].zones[0].fog,55,140);
+function applyZone(f){ // f: 0..1 關卡進度 → 色域漸變(取當前關卡的三段色)
+  const Z=STAGES[curStage].zones;
   const zi=f<0.5?0:1, zj=Math.min(zi+1,2), t=clamp((f-zi*0.5)/0.5,0,1);
-  const za=ZONES[zi],zb=ZONES[zj];
+  const za=Z[zi],zb=Z[zj];
   bgTopC.setHex(za.top).lerp(new THREE.Color(zb.top),t);
   bgBotC.setHex(za.bot).lerp(new THREE.Color(zb.bot),t);
   paintBackdrop();
@@ -277,12 +320,6 @@ function boom(vol,dur,freq){
 
 /* ---------------- BGM(WebAudio 音序器:粉彩氛圍鈴聲) ---------------- */
 const BGM={timer:null,step:0};
-const CHORDS=[            // C — Am — F — G(每和弦 8 個八分音符)
-  [261.63,329.63,392.00],
-  [220.00,261.63,329.63],
-  [174.61,220.00,261.63],
-  [196.00,246.94,293.66]
-];
 const ARP=[0,1,2,1,2,0,1,2];
 function bgmPad(f,dur){
   try{
@@ -299,10 +336,10 @@ function bgmPad(f,dur){
     flt.connect(g).connect(a.destination);
   }catch(e){}
 }
-function bgmBell(f,vol){
+function bgmBell(f,vol,type){
   try{
     const a=ac(),o=a.createOscillator(),g=a.createGain();
-    o.type='sine'; o.frequency.value=f;
+    o.type=type||'sine'; o.frequency.value=f;
     g.gain.setValueAtTime(vol,a.currentTime);
     g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.9);
     o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime+.95);
@@ -310,16 +347,21 @@ function bgmBell(f,vol){
 }
 function bgmTick(){
   if(muted) { BGM.step=(BGM.step+1)%32; return; }
-  const st=BGM.step, ci=Math.floor(st/8)%4, ch=CHORDS[ci];
+  const M=STAGES[curStage].music;
+  const st=BGM.step, ch=M.chords[Math.floor(st/8)%4];
   if(st%8===0){ ch.forEach(f=>bgmPad(f,3.8)); bgmPad(ch[0]/2,3.8); }
-  if(st%2===0) bgmBell(ch[ARP[st%8]]*2,.032);
-  if(state==='boss'){                     // Boss 戰:加低音鼓與急促鈴
+  if(st%2===0) bgmBell(ch[ARP[st%8]]*2,M.bell==='square'?.02:.032,M.bell);
+  if(M.perc&&st%4===2) boom(.055,.1,240);           // 黃昏天城:常駐律動
+  if(state==='boss'){                               // Boss 戰:低音鼓+急促鈴
     if(st%4===0) boom(.09,.18,180);
-    if(st%2===1) bgmBell(ch[(st*2)%3]*4,.02);
+    if(st%2===1) bgmBell(ch[(st*2)%3]*4,.02,M.bell);
   }
   BGM.step=(BGM.step+1)%32;
 }
-function bgmStart(){ if(!BGM.timer){ ac(); BGM.timer=setInterval(bgmTick,430); } }
+function bgmStart(){
+  ac(); bgmStop(); BGM.step=0;
+  BGM.timer=setInterval(bgmTick,STAGES[curStage].music.tempo);
+}
 function bgmStop(){ if(BGM.timer){ clearInterval(BGM.timer); BGM.timer=null; } }
 
 /* ---------------- input ---------------- */
@@ -365,9 +407,8 @@ function glow(hex){
    SCENERY — 聖殿廊道(捲軸群組)
    ========================================================= */
 const scroll=new THREE.Group(); scene.add(scroll);
-const LEVEL_LEN=300;          // 關卡長度(世界 z)
+let LEVEL_LEN=300;            // 關卡長度(世界 z,依 STAGE 設定)
 let scrollZ=0;                // 已捲動距離 = 關卡進度
-const SCROLL_SPD=4.6;
 
 function box(g,x,y,z,w,h,d,mat,shadow){
   const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
@@ -445,18 +486,18 @@ function resetDove(d,first){
 
 /* ---------- 建關卡場景 ---------- */
 function buildStage(){
-  // 主走道(整條聖殿廊道,棋盤對比)
+  const C=STAGES[curStage].scn;
+  // 主走道(棋盤對比 + 中線鑲嵌)
   const wpath=12;
   for(let z=14;z>-LEVEL_LEN-60;z-=8){
-    const shade=(Math.floor(z/8)%2===0)?PAL.cream:0xe0c49e;
+    const shade=(Math.floor(z/8)%2===0)?C.pathA:C.pathB;
     box(scroll,0,-.5,z-4,wpath,1,8.05,pastel(shade));
-    // 中線金色鑲嵌
-    box(scroll,0,.02,z-4,.5,.06,8.05,pastel(PAL.gold,PAL.gold,.1),false);
+    box(scroll,0,.02,z-4,.5,.06,8.05,pastel(C.trim,C.trim,.12),false);
   }
   // 走道下方:漂浮岩島(垂直深度感)
   for(let z=6;z>-LEVEL_LEN-40;z-=22){
     const isl=new THREE.Group();
-    box(isl,0,0,0,rnd(5,9),1.2,rnd(5,8),pastel(Math.random()<.5?PAL.tealD:PAL.terra));
+    box(isl,0,0,0,rnd(5,9),1.2,rnd(5,8),pastel(Math.random()<.5?C.sideA:C.sideB));
     const cone=new THREE.Mesh(new THREE.ConeGeometry(rnd(1.8,3),rnd(3,6),5),pastel(PAL.rose));
     cone.rotation.x=Math.PI; cone.position.y=-2.6; isl.add(cone);
     isl.position.set((Math.random()<.5?-1:1)*rnd(16,26),rnd(-10,-5.5),z);
@@ -469,16 +510,35 @@ function buildStage(){
       box(scroll,wpath/2-.3,.35,z,.5,.7,.5,pastel(PAL.terra));
     }
   }
-  // 兩側漂浮平台與聖殿建築(交錯)
-  for(let z=0;z>-LEVEL_LEN-40;z-=16){
-    const side=(Math.floor(z/16)%2===0)?-1:1;
+  // 雲海迴廊:走道兩側柱廊(關卡特色)
+  if(C.colonnade){
+    for(let z=0;z>-LEVEL_LEN;z-=10){
+      pillarRow(scroll,-wpath/2+1,z,1,1,C.trim);
+      pillarRow(scroll,wpath/2-1,z-5,1,1,C.trim);
+    }
+  }
+  // 黃昏天城:火盆(關卡特色,金色火光)
+  if(C.brazier){
+    for(let z=-8;z>-LEVEL_LEN;z-=18){
+      [-1,1].forEach(sd=>{
+        cyl(scroll,sd*(wpath/2-1),1,z,.22,.3,2,6,pastel(0x2a2338));
+        const fl=new THREE.Mesh(new THREE.SphereGeometry(.34,8,6),glow(0xffb23d));
+        fl.position.set(sd*(wpath/2-1),2.3,z);
+        fl.userData.ph=rnd(0,9); fl.userData.flame=true;
+        scroll.add(fl); flames.push(fl);
+      });
+    }
+  }
+  // 兩側漂浮平台與聖殿建築(交錯,間距依關卡密度)
+  for(let z=0;z>-LEVEL_LEN-40;z-=C.spacing){
+    const side=(Math.floor(z/C.spacing)%2===0)?-1:1;
     const px=side*rnd(10.5,13.5);
     const g2=new THREE.Group();
-    box(g2,0,-.8,0,rnd(6,8),1.6,rnd(6,9),pastel(side<0?PAL.rose:PAL.teal));
+    box(g2,0,-.8,0,rnd(6,8),1.6,rnd(6,9),pastel(side<0?C.sideA:C.sideB));
     const r=Math.random();
-    if(r<.4) temple(g2,0,0,rnd(1.6,2.4),side<0?PAL.terra:PAL.tealD,PAL.cream);
-    else if(r<.65) archway(g2,0,0,rnd(1.4,2),side<0?PAL.rose:PAL.lav);
-    else { pillarRow(g2,0,2,3,2,PAL.cream); tree(g2,rnd(-2,2),-2,rnd(1.4,2)); }
+    if(r<.4) temple(g2,0,0,rnd(1.6,2.4),side<0?PAL.terra:PAL.tealD,C.pathA);
+    else if(r<.65) archway(g2,0,0,rnd(1.4,2),side<0?C.sideA:PAL.lav);
+    else { pillarRow(g2,0,2,3,2,C.pathA); tree(g2,rnd(-2,2),-2,rnd(1.4,2)); }
     if(Math.random()<.5) tree(g2,rnd(-2.5,2.5),rnd(2,3.5),rnd(1,1.6));
     if(Math.random()<.4) waterfall(g2,rnd(-2,2),rnd(3.5,4.2),rnd(1.2,2.4));
     g2.position.set(px,rnd(-1.2,1.5),z);
@@ -486,7 +546,7 @@ function buildStage(){
   }
   // 走道上的裝飾:拱門橫跨 + 石階 + 樹
   for(let z=-14;z>-LEVEL_LEN;z-=26){
-    if(Math.random()<.6) archway(scroll,0,z,2.4,[PAL.rose,PAL.teal,PAL.lav][Math.floor(Math.random()*3)]);
+    if(Math.random()<.6) archway(scroll,0,z,2.4,[C.sideA,C.sideB,PAL.lav][Math.floor(Math.random()*3)]);
     if(Math.random()<.5) tree(scroll,rnd(-4.5,4.5),z-9,rnd(1.2,1.8));
     if(Math.random()<.4) stairs(scroll,rnd(-4,4),z-14,Math.random()<.5?1:-1,PAL.terra);
   }
@@ -498,10 +558,11 @@ function buildStage(){
     cyl(scroll,p[0],2.4,bz+p[1],.5,.62,4.8,6,pastel(PAL.rose));
     cyl(scroll,p[0],5,bz+p[1],.85,.85,.5,4,pastel(PAL.gold,PAL.gold,.15));
   });
-  // 白鴿
-  for(let k=0;k<5;k++) makeDove();
-  // 低空雲海(場景座標,慢速視差漂移)
-  if(!clouds.length) for(let k=0;k<11;k++){
+  // 白鴿(只建一次)
+  while(doves.length<5) makeDove();
+  // 低空雲海(場景座標,慢速視差漂移;數量依關卡重建)
+  clouds.forEach(c=>scene.remove(c)); clouds.length=0;
+  for(let k=0;k<C.cloudN;k++){
     const c=new THREE.Mesh(new THREE.SphereGeometry(rnd(2.4,4.6),10,7),
       new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.85}));
     c.scale.y=.28;
@@ -510,7 +571,7 @@ function buildStage(){
     scene.add(c); clouds.push(c);
   }
 }
-const clouds=[];
+const clouds=[], flames=[];
 
 /* =========================================================
    PLAYER — 紙鳶戰機
@@ -521,32 +582,46 @@ const player={pos:new THREE.Vector3(0,6,9),lives:3,bombs:2,inv:0,
 let ship;
 function buildShip(){
   ship=new THREE.Group();
-  // 主翼(摺紙三角)
-  const wingGeo=new THREE.BufferGeometry();
-  wingGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array([
-    0,0,-1.05,  -1.05,0,.55,  -.16,.14,.5,
-    0,0,-1.05,  -.16,.14,.5,  .16,.14,.5,
-    0,0,-1.05,  .16,.14,.5,   1.05,0,.55,
-    -1.05,0,.55, -.3,-.06,.62, -.16,.14,.5,
-    1.05,0,.55,  .16,.14,.5,  .3,-.06,.62
-  ]),3));
-  wingGeo.computeVertexNormals();
-  const wing=new THREE.Mesh(wingGeo,new THREE.MeshStandardMaterial({
-    color:PAL.white,roughness:.75,metalness:0,side:THREE.DoubleSide}));
-  wing.castShadow=true; ship.add(wing);
-  // 機身脊
-  const spine=new THREE.Mesh(new THREE.ConeGeometry(.13,1.7,4),pastel(PAL.coral,PAL.coral,.25));
-  spine.rotation.x=-Math.PI/2; spine.position.set(0,.1,-.1); spine.castShadow=true; ship.add(spine);
+  /* ---- 四軸無人機:亮紅機身+白頂殼+青色旋翼環+黃色機頭,高對比 ---- */
+  const bodyMat=new THREE.MeshStandardMaterial({color:0xff2e1e,roughness:.4,metalness:.1,
+    emissive:0x991000,emissiveIntensity:.45});
+  const shellMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.35});
+  const darkMat=new THREE.MeshStandardMaterial({color:0x201c30,roughness:.6});
+  const body=new THREE.Mesh(new THREE.BoxGeometry(.6,.28,.8),bodyMat);
+  body.castShadow=true; ship.add(body);
+  const top=new THREE.Mesh(new THREE.BoxGeometry(.38,.14,.54),shellMat);
+  top.position.y=.19; ship.add(top);
+  // 機頭指示(亮黃,一眼辨識方向)
+  const nose=new THREE.Mesh(new THREE.ConeGeometry(.15,.34,4),glow(0xffe23d));
+  nose.rotation.x=-Math.PI/2; nose.position.set(0,.04,-.55); ship.add(nose);
+  // 四臂 + 青色旋翼環 + 螺旋槳
+  ship.userData.props=[];
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach((p,i)=>{
+    const arm=new THREE.Mesh(new THREE.BoxGeometry(.52,.09,.13),darkMat);
+    arm.position.set(p[0]*.4,.0,p[1]*.4);
+    arm.rotation.y=Math.atan2(-p[1],p[0]);
+    arm.castShadow=true; ship.add(arm);
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(.3,.055,10,24),
+      new THREE.MeshStandardMaterial({color:0x14d4ff,roughness:.3,
+        emissive:0x0a90c8,emissiveIntensity:1}));
+    ring.rotation.x=Math.PI/2; ring.position.set(p[0]*.62,.05,p[1]*.62);
+    ring.castShadow=true; ship.add(ring);
+    const prop=new THREE.Mesh(new THREE.BoxGeometry(.5,.02,.07),glow(0xf2fbff));
+    prop.position.set(p[0]*.62,.13,p[1]*.62);
+    prop.userData.d=i%2?1:-1;
+    ship.add(prop); ship.userData.props.push(prop);
+  });
   // 尾燈(bloom)
   const tail=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),glow(0xaef2ff));
-  tail.position.set(0,.08,.62); tail.name='tail'; ship.add(tail);
+  tail.position.set(0,.1,.5); tail.name='tail'; ship.add(tail);
   // 護盾圈(無敵時顯示)
-  const shield=new THREE.Mesh(new THREE.TorusGeometry(1,.035,8,32),glow(0xaef2ff));
+  const shield=new THREE.Mesh(new THREE.TorusGeometry(1.05,.04,8,32),glow(0xaef2ff));
   shield.rotation.x=Math.PI/2; shield.name='shield'; ship.add(shield);
+  ship.scale.setScalar(1.12);
   scene.add(ship);
   // 影子
   const sh=new THREE.Mesh(new THREE.CircleGeometry(.6,16),
-    new THREE.MeshBasicMaterial({color:0x4a3f55,transparent:true,opacity:.18,depthWrite:false}));
+    new THREE.MeshBasicMaterial({color:0x2a2338,transparent:true,opacity:.3,depthWrite:false}));
   sh.rotation.x=-Math.PI/2; sh.name='pshadow'; scene.add(sh);
   ship.userData.shadow=sh;
 }
@@ -586,6 +661,50 @@ const drops=pool(()=>{
   const ring=new THREE.Mesh(new THREE.TorusGeometry(.6,.04,8,24),glow(PAL.white)); ring.rotation.x=Math.PI/2; g.add(ring);
   return g;
 },8);
+/* ---------- 訓練環(穿環連鎖:無人機的看家本領!) ---------- */
+const gates=[]; let chain=0;
+function spawnGate(x){
+  const g=new THREE.Group();
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.45,.13,10,36),
+    new THREE.MeshStandardMaterial({color:0xffbe3d,roughness:.35,metalness:.3,
+      emissive:0xcc8a00,emissiveIntensity:.7}));
+  g.add(ring);
+  const inner=new THREE.Mesh(new THREE.CircleGeometry(1.3,24),
+    new THREE.MeshBasicMaterial({color:0xffe9a8,transparent:true,opacity:.14,side:THREE.DoubleSide,depthWrite:false}));
+  g.add(inner);
+  g.position.set(x,6,-19);
+  scene.add(g);
+  gates.push({obj:g,ring,passed:false,t:rnd(0,9)});
+}
+function updateGates(dt){
+  const spd=STAGES[curStage].scroll;
+  for(let i=gates.length-1;i>=0;i--){
+    const g=gates[i];
+    g.t+=dt;
+    g.obj.position.z+=spd*dt;
+    g.obj.rotation.z=Math.sin(g.t*1.6)*.12;
+    const s=1+Math.sin(g.t*4)*.04;
+    g.ring.scale.set(s,s,1);
+    if(!g.passed&&player.alive&&
+       Math.abs(g.obj.position.z-player.pos.z)<.7&&
+       Math.hypot(g.obj.position.x-player.pos.x,0)<1.3){
+      g.passed=true;
+      chain++;
+      const pts=200*chain;
+      addScore(pts);
+      burst(g.obj.position,0xffd166,26,3.5);
+      beep(880+chain*110,.18,'triangle',.1,1320+chain*110);
+      if(chain%3===0&&player.bombs<4){ player.bombs++; updHUD(); toast(`⭕ 連鎖 ×${chain}!炸彈 +1`); }
+      else toast(`⭕ 穿環連鎖 ×${chain}(+${pts})`);
+      g.ring.material.emissive.setHex(0x22aa55);
+      g.ring.material.color.setHex(0x4fe3a3);
+    }
+    if(g.obj.position.z>14){
+      if(!g.passed&&chain>0){ chain=0; toast('⭕ 連鎖中斷…'); }
+      scene.remove(g.obj); gates.splice(i,1);
+    }
+  }
+}
 /* 粒子 */
 const PMAX=700; let pGeo,pData=[];
 {
@@ -648,7 +767,7 @@ function spawnEnemy(kind,opt){
       g.position.x=e.opt.x+Math.sin(e.t*1.8+(e.opt.ph||0))*4.2;
       g.rotation.z=Math.cos(e.t*1.8)*.3;
       e.fireT-=dt;
-      if(e.fireT<=0&&g.position.z>-10){ e.fireT=2.1; aimShot(g.position,5.6); }
+      if(e.fireT<=0&&g.position.z>-10){ e.fireT=2.1*DIFF.rate; aimShot(g.position,5.6); }
       if(g.position.z>14) e.dead=2;
     };
   } else if(kind==='diver'){   // 旋轉方晶:朝玩家俯衝
@@ -685,10 +804,23 @@ function spawnEnemy(kind,opt){
       e.head.lookAt(player.pos.x,e.head.getWorldPosition(new THREE.Vector3()).y,player.pos.z);
       e.fireT-=dt;
       if(e.fireT<=0){
-        e.fireT=e.opt.rapid?1.3:2.2;
+        e.fireT=(e.opt.rapid?1.3:2.2)*DIFF.rate;
         const n=e.opt.rapid?3:1;
         for(let k=0;k<n;k++) setTimeout(()=>{ if(!e.dead) aimShot(new THREE.Vector3(g.position.x,6,g.position.z+scroll.position.z),6.4); },k*140);
       }
+    };
+  } else if(kind==='spinner'){ // 旋轉晶塔:環形彈幕(第二關起)
+    e.hp=6; e.score=400; e.r=.95;
+    box(g,0,0,0,1.05,1.05,1.05,pastel(PAL.tealD,PAL.tealD,.3));
+    box(g,0,0,0,.65,1.7,.65,pastel(PAL.gold,PAL.gold,.25));
+    g.position.set(opt.x||0,6,-17);
+    e.update=(dt)=>{
+      e.t+=dt;
+      g.rotation.y+=dt*2.4; g.rotation.x=Math.sin(e.t)*.3;
+      g.position.z+=1.5*dt;
+      e.fireT-=dt;
+      if(e.fireT<=0&&g.position.z>-12){ e.fireT=2.6*DIFF.rate; ringShot(g.position,8+curStage*2,3.8,e.t); }
+      if(g.position.z>14) e.dead=2;
     };
   } else if(kind==='carrier'){ // 運寶飛舟:掉落強化
     e.hp=7; e.score=500; e.r=1.2;
@@ -717,7 +849,7 @@ function spawnEnemy(kind,opt){
       else{
         g.position.x=Math.sin(e.t*.7)*5;
         e.fireT-=dt;
-        if(e.fireT<=0){ e.fireT=1.6; fanShot(g.position,player.pos,5,.36,5.4); }
+        if(e.fireT<=0){ e.fireT=1.6*DIFF.rate; fanShot(g.position,player.pos,5,.36,5.4); }
       }
     };
   }
@@ -767,6 +899,7 @@ function updateShards(dt){
 
 /* ---------- 敵彈 ---------- */
 function aimShot(from,spd){
+  spd*=DIFF.spd;
   const s=eShots.get(); if(!s) return;
   s.obj.position.copy(from);
   const d=player.pos.clone().sub(from); d.y=0; d.normalize();
@@ -774,6 +907,7 @@ function aimShot(from,spd){
   beep(950,.08,'sine',.03,700);
 }
 function fanShot(from,at,n,spread,spd){
+  spd*=DIFF.spd;
   const base=Math.atan2(player.pos.x-from.x,player.pos.z-from.z);
   for(let k=0;k<n;k++){
     const s=eShots.get(); if(!s) return;
@@ -784,6 +918,7 @@ function fanShot(from,at,n,spread,spd){
   beep(820,.1,'sine',.035,560);
 }
 function ringShot(from,n,spd,phase){
+  spd*=DIFF.spd;
   for(let k=0;k<n;k++){
     const s=eShots.get(); if(!s) continue;
     const a=k/n*TAU+(phase||0);
@@ -814,9 +949,10 @@ function applyDrop(type){
    ========================================================= */
 let boss=null;
 function spawnBoss(){
+  const S=STAGES[curStage];
   const g=new THREE.Group();
-  // 巨石面具
-  box(g,0,0,0,4.6,4.2,2.4,pastel(PAL.lav));
+  // 巨石面具(主色依關卡)
+  box(g,0,0,0,4.6,4.2,2.4,pastel(S.bossTint));
   box(g,0,2.4,0,3.2,1.2,2,pastel(PAL.rose));
   cyl(g,0,3.4,0,1,1.3,1,4,pastel(PAL.gold,PAL.gold,.18));
   box(g,0,-.4,-1.3,3,1.2,.5,pastel(PAL.cream));
@@ -835,9 +971,11 @@ function spawnBoss(){
   g.position.set(0,6,-20);
   g.traverse(o=>{ if(o.isMesh) o.castShadow=true; });
   scene.add(g);
-  boss={obj:g,eyes,orbiters,hp:170,hpMax:170,t:0,phase:0,fireT:2,r:2.3,entering:true};
-  $('bossbar').style.display='block'; $('bosslabel').style.display='block';
-  toast('⚠ GUARDIAN ⚠');
+  boss={obj:g,eyes,orbiters,hp:S.bossHp,hpMax:S.bossHp,t:0,phase:0,fireT:2,r:2.3,entering:true};
+  $('bossbar').style.display='block';
+  $('bosslabel').style.display='block';
+  $('bosslabel').textContent=S.bossName;
+  toast('⚠ '+S.bossName+' ⚠');
   beep(140,.8,'sawtooth',.12,60); beep(140,.8,'sawtooth',.12,60);
 }
 function updateBoss(dt){
@@ -863,13 +1001,13 @@ function updateBoss(dt){
   b.fireT-=dt;
   if(b.fireT<=0){
     const p=g.position.clone();
-    if(b.phase===0){ b.fireT=1.5; fanShot(p,player.pos,5,.3,5.2); }
+    if(b.phase===0){ b.fireT=1.5*DIFF.rate; fanShot(p,player.pos,5,.3,5.2); }
     else if(b.phase===1){
-      b.fireT=1.15;
+      b.fireT=1.15*DIFF.rate;
       if(Math.random()<.5) ringShot(p,14,4.4,b.t);
       else fanShot(p,player.pos,7,.26,5.8);
     } else {
-      b.fireT=.85;
+      b.fireT=.85*DIFF.rate;
       const r=Math.random();
       if(r<.4) ringShot(p,18,4.8,b.t*2);
       else if(r<.7) fanShot(p,player.pos,9,.22,6.2);
@@ -888,7 +1026,7 @@ function killBoss(){
   for(let k=0;k<7;k++) setTimeout(()=>{ burst(p.clone().add(new THREE.Vector3(rnd(-2,2),0,rnd(-2,2))),[PAL.coral,PAL.gold,PAL.rose][k%3],36,5); boom(.22,.5,500); shake=.8; },k*160);
   addScore(10000);
   eShots.each(s=>eShots.kill(s));
-  setTimeout(()=>{ stageClear(); },1600);
+  setTimeout(()=>{ if(curStage>=STAGES.length-1) allClear(); else nextStage(); },1600);
 }
 
 /* =========================================================
@@ -897,30 +1035,49 @@ function killBoss(){
 let events=[];
 function buildScript(){
   events=[];
+  const S=STAGES[curStage], L=S.len;
+  const density=[1,1.35,1.75][curStage];
   const E=(at,fn)=>events.push({at,fn});
-  // 開場:成排飛面具
-  E(8,()=>{ for(let k=0;k<4;k++) spawnEnemy('flyer',{x:-4+k*2.6,ph:k*.8}); });
-  E(20,()=>{ for(let k=0;k<3;k++) spawnEnemy('diver',{x:-5+k*5,delay:.8+k*.3}); });
-  E(30,()=>{ spawnEnemy('carrier',{x:-3,drop:'R'}); });
-  E(40,()=>{ for(let k=0;k<5;k++) spawnEnemy('flyer',{x:4-k*2.2,ph:k*.7}); });
-  E(52,()=>{ for(let k=0;k<4;k++) spawnEnemy('diver',{x:-6+k*4,delay:.6+k*.25}); });
-  E(62,()=>{ spawnEnemy('carrier',{x:4,drop:'P'}); });
-  E(74,()=>{ for(let k=0;k<6;k++) spawnEnemy('flyer',{x:-5+k*2,ph:k*.5}); });
-  E(88,()=>{ spawnEnemy('midboss',{}); toast('石像守衛!'); });
-  E(112,()=>{ spawnEnemy('carrier',{x:0,drop:'B'}); });
-  E(122,()=>{ for(let k=0;k<5;k++) spawnEnemy('diver',{x:-6+k*3,delay:.5+k*.2}); });
-  E(134,()=>{ for(let k=0;k<6;k++) spawnEnemy('flyer',{x:5-k*2,ph:k*.6}); });
-  E(150,()=>{ spawnEnemy('carrier',{x:-4,drop:'P'}); });
-  E(162,()=>{ for(let k=0;k<4;k++) spawnEnemy('diver',{x:-4.5+k*3,delay:.4+k*.2}); for(let k=0;k<4;k++) spawnEnemy('flyer',{x:-3+k*2,ph:k}); });
-  E(180,()=>{ spawnEnemy('carrier',{x:2,drop:player.wpn==='vulcan'?'R':'B'}); });
-  E(192,()=>{ for(let k=0;k<7;k++) spawnEnemy('flyer',{x:-6+k*2,ph:k*.4}); });
-  E(210,()=>{ for(let k=0;k<5;k++) spawnEnemy('diver',{x:-6+k*3,delay:.35+k*.18}); });
-  E(226,()=>{ spawnEnemy('carrier',{x:0,drop:'P'}); });
-  E(240,()=>{ for(let k=0;k<8;k++) setTimeout(()=>spawnEnemy('flyer',{x:rnd(-6,6),ph:rnd(0,3)}),k*350); });
-  // 走道砲塔(直接放在 scroll 座標)
-  [-34,-58,-90,-98,-126,-158,-166,-198,-230,-238,-262].forEach((z,i)=>{
-    spawnEnemy('turret',{x:(i%2?3.4:-3.4),z,rapid:i>5});
+  // 波次鋪排(依難度密度)
+  let z=8, wave=0;
+  while(z<L-34){
+    const pick=wave%6;
+    if(pick===0){
+      const n=3+Math.round(2*density);
+      E(z,()=>{ for(let k=0;k<n;k++) spawnEnemy('flyer',{x:-5+k*(10/Math.max(1,n-1)),ph:k*.7}); });
+    } else if(pick===1){
+      const n=2+Math.round(2*density);
+      E(z,()=>{ for(let k=0;k<n;k++) spawnEnemy('diver',{x:-6+k*(12/Math.max(1,n-1)),delay:.5+k*.25}); });
+    } else if(pick===2){
+      const w=wave;
+      E(z,()=>spawnEnemy('carrier',{x:rnd(-4,4),drop:['R','P','B','P'][w%4]}));
+    } else if(pick===3){
+      if(curStage>0) E(z,()=>{ spawnEnemy('spinner',{x:rnd(-5,5)}); if(curStage>1) spawnEnemy('spinner',{x:rnd(-5,5)}); });
+      else E(z,()=>{ for(let k=0;k<3;k++) spawnEnemy('flyer',{x:-3+k*3,ph:k}); });
+    } else if(pick===4){
+      const n=3+Math.round(3*density);
+      E(z,()=>{ for(let k=0;k<n;k++) setTimeout(()=>spawnEnemy('flyer',{x:rnd(-6,6),ph:rnd(0,3)}),k*300); });
+    } else {
+      // 穿環小段(2~3 個)
+      E(z,()=>{ const m=2+(curStage>0?1:0);
+        for(let k=0;k<m;k++) setTimeout(()=>spawnGate(rnd(-5,5)),k*950); });
+    }
+    z+=rnd(11,16)/Math.sqrt(density);
+    wave++;
+  }
+  // 中堅
+  E(L*.45,()=>{ spawnEnemy('midboss',{}); toast('⚠ 石像守衛!'); });
+  if(curStage===2) E(L*.78,()=>{ spawnEnemy('midboss',{}); spawnEnemy('spinner',{x:-5}); spawnEnemy('spinner',{x:5}); });
+  // 穿環快衝段(每關中段固定一長串)
+  E(L*.62,()=>{
+    toast('⭕ 穿環快衝!');
+    const xs=[0,-3,3,-5,5,-2,2,0];
+    xs.forEach((x,k)=>setTimeout(()=>spawnGate(x),k*820));
   });
+  // 走道砲塔
+  for(let tz=-26;tz>-(L+6);tz-=rnd(20,32)/density){
+    spawnEnemy('turret',{x:(Math.random()<.5?-3.4:3.4),z:tz,rapid:curStage>0&&Math.random()<.5});
+  }
   events.sort((a,b)=>a.at-b.at);
 }
 
@@ -939,37 +1096,80 @@ function updHUD(){
   $('wpnLv').textContent='Lv.'+player.lv;
   $('hi').textContent='HI '+hiScore;
 }
-function resetGame(){
+function resetStage(keep){
+  const S=STAGES[curStage];
+  LEVEL_LEN=S.len; DIFF=S.diff;
   // 清空所有實體
   enemies.forEach(e=>{ (e.inScroll?scroll:scene).remove(e.obj); });
   enemies.length=0;
   if(boss){ scene.remove(boss.obj); boss=null; }
   $('bossbar').style.display='none'; $('bosslabel').style.display='none';
   pShots.each(o=>pShots.kill(o)); eShots.each(o=>eShots.kill(o)); drops.each(o=>drops.kill(o));
-  pData.length=0;
+  gates.forEach(g=>scene.remove(g.obj)); gates.length=0; chain=0;
+  shards.forEach(s=>{ s.active=false; s.obj.visible=false; });
+  pData.length=0; flames.length=0;
   // 重建場景
   while(scroll.children.length) { const c=scroll.children[0]; scroll.remove(c); }
   falls.length=0;
-  scroll.position.z=0; scrollZ=0;
+  scroll.position.z=0; scrollZ=0; stageT=0;
   buildStage(); buildScript();
-  score=0; killCount=0; stageT=0;
-  Object.assign(player,{lives:3,bombs:2,inv:2,wpn:'vulcan',lv:1,alive:true,fireT:0});
+  if(!keep){
+    score=0; killCount=0;
+    Object.assign(player,{lives:3,bombs:2,inv:2,wpn:'vulcan',lv:1,alive:true,fireT:0});
+  } else {
+    player.inv=2.5; player.alive=true;
+  }
+  ship.visible=true; ship.userData.shadow.visible=true;
   player.pos.set(0,6,9);
   applyZone(0);
-  $('score').textContent='0'; updHUD();
+  $('score').textContent=score; updHUD();
 }
-function startGame(){
-  resetGame();
+function startGame(si){
+  curStage=clamp(si||0,0,STAGES.length-1);
+  resetStage(false);
   $('title').classList.remove('show'); $('over').classList.remove('show');
   $('hud').style.display='block';
   state='play';
-  toast('STAGE 1・天空聖殿');
+  toast(`STAGE ${curStage+1}・${STAGES[curStage].name}`);
   ac(); bgmStart();
 }
+function nextStage(){
+  state='clearing';
+  addScore(5000);
+  if(player.lives<4){ player.lives++; updHUD(); }
+  unlocked=Math.max(unlocked,curStage+1);
+  try{ localStorage.setItem('skyTempleStg',unlocked); localStorage.setItem('skyTempleHi',hiScore); }catch(e){}
+  toast(`STAGE ${curStage+1} CLEAR!+5000・生命+1`);
+  $('flash').style.transition='opacity 1.2s'; $('flash').style.opacity=.9;
+  setTimeout(()=>{
+    curStage++;
+    resetStage(true);
+    $('flash').style.opacity=0;
+    state='play';
+    toast(`STAGE ${curStage+1}・${STAGES[curStage].name}`);
+    bgmStart();   // 換關 = 換音樂
+  },1600);
+}
+function allClear(){
+  unlocked=2;
+  try{ localStorage.setItem('skyTempleStg',unlocked); }catch(e){}
+  stageClear();
+}
+function renderStageSel(){
+  const box=$('stageSel'); box.innerHTML='';
+  STAGES.forEach((S,i)=>{
+    const b=document.createElement('button');
+    b.className='go alt';
+    b.style.cssText='padding:.55em 1.1em;font-size:.82rem;letter-spacing:.05em'+(i>unlocked?';opacity:.4;cursor:not-allowed':'');
+    b.innerHTML=`STAGE ${i+1}<br><small>${i>unlocked?'🔒':''} ${S.name}</small>`;
+    if(i<=unlocked) b.addEventListener('click',()=>startGame(i));
+    box.appendChild(b);
+  });
+}
 $('btnMute').addEventListener('click',()=>{ muted=!muted; $('btnMute').textContent=muted?'🔇':'🔊'; });
-$('btnStart').addEventListener('click',startGame);
-$('btnRetry').addEventListener('click',startGame);
-$('btnTitle').addEventListener('click',()=>{ $('over').classList.remove('show'); $('hud').style.display='none'; $('title').classList.add('show'); state='title'; });
+$('btnStart').addEventListener('click',()=>startGame(0));
+$('btnRetry').addEventListener('click',()=>startGame(curStage));
+$('btnTitle').addEventListener('click',()=>{ $('over').classList.remove('show'); $('hud').style.display='none'; renderStageSel(); $('title').classList.add('show'); state='title'; bgmStop(); });
 
 function gameOver(){
   state='over';
@@ -989,12 +1189,13 @@ function stageClear(){
   beep(784,.3,'triangle',.1); setTimeout(()=>beep(988,.3,'triangle',.1),150);
   setTimeout(()=>beep(1175,.3,'triangle',.1),300); setTimeout(()=>beep(1568,.5,'triangle',.12),450);
   setTimeout(()=>{
-    $('ovKick').textContent='STAGE 1 CLEAR';
-    $('ovTitle').textContent='聖殿的黎明';
+    $('ovKick').textContent='ALL STAGES CLEAR';
+    $('ovTitle').textContent='天空的守護者!';
+    const full=player.lives>=4;
+    if(full) addScore(50000);
     $('ovScore').textContent='SCORE '+score;
     $('ovHi').textContent='HI-SCORE '+hiScore;
-    $('ovStat').textContent=`擊墜 ${killCount}・無傷加成 ${player.lives===3?'+30000!':'—'}`;
-    if(player.lives===3) addScore(30000);
+    $('ovStat').textContent=`擊墜 ${killCount}・滿血通關加成 ${full?'+50000!':'—'}`;
     $('over').classList.add('show');
     state='over';
   },2600);
@@ -1088,6 +1289,7 @@ function update(dt){
     ship.position.copy(player.pos);
     ship.rotation.z=lerp(ship.rotation.z,-mx*.5,1-Math.exp(-10*dt));
     ship.rotation.x=lerp(ship.rotation.x,mz*.22,1-Math.exp(-10*dt));
+    ship.userData.props.forEach(p=>{ p.rotation.y+=dt*42*p.userData.d; });
     ship.visible=player.inv<=0||Math.sin(performance.now()*.025)>0;
     const sh=ship.userData.shadow;
     sh.position.set(player.pos.x,.06,player.pos.z);
@@ -1101,12 +1303,16 @@ function update(dt){
   }
   /* 捲軸 */
   if(state==='play'){
-    scrollZ+=SCROLL_SPD*dt;
+    scrollZ+=STAGES[curStage].scroll*dt;
     scroll.position.z=scrollZ;
     applyZone(clamp(scrollZ/LEVEL_LEN,0,1));
     while(events.length&&events[0].at<=scrollZ){ events.shift().fn(); }
     if(scrollZ>=LEVEL_LEN){ state='boss'; spawnBoss(); }
   }
+  /* 訓練環 */
+  updateGates(dt);
+  /* 火盆閃爍(黃昏天城) */
+  flames.forEach(f=>{ const s=1+Math.sin(performance.now()*.012+f.userData.ph)*.25; f.scale.set(s,s*1.3,s); });
   /* Boss */
   if(boss) updateBoss(dt);
   /* 敵人 */
@@ -1194,7 +1400,7 @@ function update(dt){
 }
 
 /* ---------- loop ---------- */
-buildShip(); buildStage();
+buildShip(); buildStage(); renderStageSel();
 updHUD(); $('hi').textContent='HI '+hiScore;
 let last=performance.now();
 function frame(now){
