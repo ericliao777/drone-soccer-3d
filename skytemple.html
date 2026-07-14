@@ -38,6 +38,10 @@
     opacity:0; transition:opacity .3s; white-space:nowrap}
   #toast.on{opacity:1}
   #flash{position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:8}
+  #vig{position:fixed; inset:0; pointer-events:none; z-index:4;
+    background:radial-gradient(ellipse at 50% 42%, transparent 52%, rgba(80,45,75,.3) 100%)}
+  .mbtn{pointer-events:auto; cursor:pointer; background:rgba(247,239,227,.6); border:2px solid rgba(74,63,85,.2);
+    border-radius:10px; padding:.2em .6em; font-size:.8rem; font-family:var(--cjk)}
   #bombBtn{position:absolute; right:22px; bottom:74px; width:76px; height:76px; border-radius:50%;
     background:rgba(232,131,107,.28); border:3px solid var(--coral); color:#a8503c; font-weight:900;
     font-size:.85rem; display:none; pointer-events:auto; touch-action:none; font-family:var(--cjk)}
@@ -83,6 +87,7 @@
     <span class="sp"></span>
     <span id="lives">▲▲▲</span>
     <span id="bombs">✦✦</span>
+    <button class="mbtn" id="btnMute">🔊</button>
   </div>
   <div id="bosslabel">GUARDIAN OF THE TEMPLE</div>
   <div id="bossbar"><div id="bossfill"></div></div>
@@ -92,6 +97,7 @@
   <div class="keyhint">←→↑↓/WASD 移動・自動射擊・<b>X/空白鍵</b> 炸彈</div>
 </div>
 <div id="flash"></div>
+<div id="vig"></div>
 
 <!-- ---------- title ---------- -->
 <div class="ovl show" id="title">
@@ -145,15 +151,15 @@ try{ hiScore=+localStorage.getItem('skyTempleHi')||0; }catch(e){}
 
 /* ---------------- palette(紀念碑谷粉彩) ---------------- */
 const PAL={
-  cream:0xf2e3d5, terra:0xd98e73, rose:0xd4879c, teal:0x7fb8b0, tealD:0x5f9a92,
-  lav:0x9b8ec4, gold:0xe8c66a, ink:0x4a3f55, white:0xfdf8ef, coral:0xe8836b,
-  bulletP:0xff8a5c, bulletL:0x6fd8e8, bulletE:0xe86fa8, core:0xfff2e8
+  cream:0xf7e8d0, terra:0xe0764a, rose:0xe25f92, teal:0x2fb5a8, tealD:0x1e968c,
+  lav:0x8a68d4, gold:0xffbe3d, ink:0x3d3352, white:0xfffaf2, coral:0xff6d4a,
+  bulletP:0xff9a3c, bulletL:0x3ce8ff, bulletE:0xff4f9e, core:0xfff2e8
 };
 /* 三段色域(隨關卡推進漸變):天頂 / 地平 / 霧 */
 const ZONES=[
-  {top:0xf7d0b8, bot:0xe8a0a8, fog:0xeab4a8, hemiS:0xfff0dd, hemiG:0xc989a0},
-  {top:0xbfe0d8, bot:0xf2d8b8, fog:0xcfd8c8, hemiS:0xf0fff2, hemiG:0x9ab8b0},
-  {top:0x9b8ec4, bot:0xe8a890, fog:0xb8a0c0, hemiS:0xf2e8ff, hemiG:0x8a7aa8}
+  {top:0xffb37c, bot:0xe86a8a, fog:0xf0a08c, hemiS:0xfff0d8, hemiG:0xd4738e},
+  {top:0x63d4c4, bot:0xffd48a, fog:0xa8d8c2, hemiS:0xf2fff4, hemiG:0x6aada0},
+  {top:0x7a5cc9, bot:0xff8a6a, fog:0xa886c4, hemiS:0xf2e4ff, hemiG:0x7a68a8}
 ];
 
 /* ---------------- renderer / camera ---------------- */
@@ -166,9 +172,11 @@ renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const scene=new THREE.Scene();
 const VIEW_H=26;
-const camera=new THREE.OrthographicCamera(-10,10,10,-10,-60,160);
-camera.position.set(0,34,23);
-camera.lookAt(0,0,2.5);
+/* 透視相機(低角度斜視,建築立面與視差都看得到 → 立體感) */
+const CAM_POS=new THREE.Vector3(0,26,29), CAM_TGT=new THREE.Vector3(0,0,-.5);
+const camera=new THREE.PerspectiveCamera(46,2,.1,300);
+camera.position.copy(CAM_POS);
+camera.lookAt(CAM_TGT);
 let composer=null,bloomPass=null;
 try{
   const rt=new THREE.WebGLRenderTarget(4,4,{depthBuffer:true,stencilBuffer:false});
@@ -182,16 +190,16 @@ function resize(){
   const w=innerWidth,h=innerHeight,dpr=Math.min(2,window.devicePixelRatio||1);
   renderer.setPixelRatio(dpr); renderer.setSize(w,h,false);
   if(composer){ composer.setPixelRatio(dpr); composer.setSize(w,h); }
-  const asp=w/h;
-  camera.top=VIEW_H/2; camera.bottom=-VIEW_H/2;
-  camera.left=-VIEW_H*asp/2; camera.right=VIEW_H*asp/2;
+  camera.aspect=w/h;
   camera.updateProjectionMatrix();
 }
 addEventListener('resize',resize); resize();
 
 /* ---------------- lights & backdrop ---------------- */
-const hemi=new THREE.HemisphereLight(ZONES[0].hemiS,ZONES[0].hemiG,.72); scene.add(hemi);
-const sunL=new THREE.DirectionalLight(0xfff2e0,.5);
+const hemi=new THREE.HemisphereLight(ZONES[0].hemiS,ZONES[0].hemiG,.7); scene.add(hemi);
+/* 冷色補光(從另一側,讓立面出現暖冷對比 → 立體感) */
+const fill=new THREE.DirectionalLight(0x9db8ff,.28); fill.position.set(16,10,-8); scene.add(fill);
+const sunL=new THREE.DirectionalLight(0xffe2b8,.62);
 sunL.position.set(-14,26,10);
 sunL.castShadow=true;
 sunL.shadow.mapSize.set(2048,2048);
@@ -266,6 +274,53 @@ function boom(vol,dur,freq){
     s.connect(f).connect(g).connect(a.destination); s.start();
   }catch(e){}
 }
+
+/* ---------------- BGM(WebAudio 音序器:粉彩氛圍鈴聲) ---------------- */
+const BGM={timer:null,step:0};
+const CHORDS=[            // C — Am — F — G(每和弦 8 個八分音符)
+  [261.63,329.63,392.00],
+  [220.00,261.63,329.63],
+  [174.61,220.00,261.63],
+  [196.00,246.94,293.66]
+];
+const ARP=[0,1,2,1,2,0,1,2];
+function bgmPad(f,dur){
+  try{
+    const a=ac(),g=a.createGain(),flt=a.createBiquadFilter();
+    flt.type='lowpass'; flt.frequency.value=900;
+    g.gain.setValueAtTime(.0001,a.currentTime);
+    g.gain.linearRampToValueAtTime(.02,a.currentTime+.5);
+    g.gain.linearRampToValueAtTime(.0001,a.currentTime+dur);
+    [0,-5].forEach(det=>{
+      const o=a.createOscillator();
+      o.type='triangle'; o.frequency.value=f; o.detune.value=det;
+      o.connect(flt); o.start(); o.stop(a.currentTime+dur+.05);
+    });
+    flt.connect(g).connect(a.destination);
+  }catch(e){}
+}
+function bgmBell(f,vol){
+  try{
+    const a=ac(),o=a.createOscillator(),g=a.createGain();
+    o.type='sine'; o.frequency.value=f;
+    g.gain.setValueAtTime(vol,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.9);
+    o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime+.95);
+  }catch(e){}
+}
+function bgmTick(){
+  if(muted) { BGM.step=(BGM.step+1)%32; return; }
+  const st=BGM.step, ci=Math.floor(st/8)%4, ch=CHORDS[ci];
+  if(st%8===0){ ch.forEach(f=>bgmPad(f,3.8)); bgmPad(ch[0]/2,3.8); }
+  if(st%2===0) bgmBell(ch[ARP[st%8]]*2,.032);
+  if(state==='boss'){                     // Boss 戰:加低音鼓與急促鈴
+    if(st%4===0) boom(.09,.18,180);
+    if(st%2===1) bgmBell(ch[(st*2)%3]*4,.02);
+  }
+  BGM.step=(BGM.step+1)%32;
+}
+function bgmStart(){ if(!BGM.timer){ ac(); BGM.timer=setInterval(bgmTick,430); } }
+function bgmStop(){ if(BGM.timer){ clearInterval(BGM.timer); BGM.timer=null; } }
 
 /* ---------------- input ---------------- */
 const keys={};
@@ -390,11 +445,22 @@ function resetDove(d,first){
 
 /* ---------- 建關卡場景 ---------- */
 function buildStage(){
-  // 主走道(整條聖殿廊道)
+  // 主走道(整條聖殿廊道,棋盤對比)
   const wpath=12;
   for(let z=14;z>-LEVEL_LEN-60;z-=8){
-    const shade=(Math.floor(z/8)%2===0)?PAL.cream:0xe8d5c2;
+    const shade=(Math.floor(z/8)%2===0)?PAL.cream:0xe0c49e;
     box(scroll,0,-.5,z-4,wpath,1,8.05,pastel(shade));
+    // 中線金色鑲嵌
+    box(scroll,0,.02,z-4,.5,.06,8.05,pastel(PAL.gold,PAL.gold,.1),false);
+  }
+  // 走道下方:漂浮岩島(垂直深度感)
+  for(let z=6;z>-LEVEL_LEN-40;z-=22){
+    const isl=new THREE.Group();
+    box(isl,0,0,0,rnd(5,9),1.2,rnd(5,8),pastel(Math.random()<.5?PAL.tealD:PAL.terra));
+    const cone=new THREE.Mesh(new THREE.ConeGeometry(rnd(1.8,3),rnd(3,6),5),pastel(PAL.rose));
+    cone.rotation.x=Math.PI; cone.position.y=-2.6; isl.add(cone);
+    isl.position.set((Math.random()<.5?-1:1)*rnd(16,26),rnd(-10,-5.5),z);
+    scroll.add(isl);
   }
   // 走道邊欄
   for(let z=14;z>-LEVEL_LEN-60;z-=2.4){
@@ -410,8 +476,8 @@ function buildStage(){
     const g2=new THREE.Group();
     box(g2,0,-.8,0,rnd(6,8),1.6,rnd(6,9),pastel(side<0?PAL.rose:PAL.teal));
     const r=Math.random();
-    if(r<.4) temple(g2,0,0,rnd(1.2,1.8),side<0?PAL.terra:PAL.tealD,PAL.cream);
-    else if(r<.65) archway(g2,0,0,rnd(1.2,1.6),side<0?PAL.rose:PAL.lav);
+    if(r<.4) temple(g2,0,0,rnd(1.6,2.4),side<0?PAL.terra:PAL.tealD,PAL.cream);
+    else if(r<.65) archway(g2,0,0,rnd(1.4,2),side<0?PAL.rose:PAL.lav);
     else { pillarRow(g2,0,2,3,2,PAL.cream); tree(g2,rnd(-2,2),-2,rnd(1.4,2)); }
     if(Math.random()<.5) tree(g2,rnd(-2.5,2.5),rnd(2,3.5),rnd(1,1.6));
     if(Math.random()<.4) waterfall(g2,rnd(-2,2),rnd(3.5,4.2),rnd(1.2,2.4));
@@ -434,7 +500,17 @@ function buildStage(){
   });
   // 白鴿
   for(let k=0;k<5;k++) makeDove();
+  // 低空雲海(場景座標,慢速視差漂移)
+  if(!clouds.length) for(let k=0;k<11;k++){
+    const c=new THREE.Mesh(new THREE.SphereGeometry(rnd(2.4,4.6),10,7),
+      new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.85}));
+    c.scale.y=.28;
+    c.position.set(rnd(-28,28),rnd(-4.5,-2),rnd(-55,14));
+    c.userData.vz=rnd(.8,1.6);
+    scene.add(c); clouds.push(c);
+  }
 }
+const clouds=[];
 
 /* =========================================================
    PLAYER — 紙鳶戰機
@@ -654,10 +730,39 @@ function killEnemy(e,byBomb){
   e.dead=1;
   const wp=e.inScroll?new THREE.Vector3(e.obj.position.x,6,e.obj.position.z+scroll.position.z):e.obj.position.clone();
   burst(wp,PAL.coral,26,4); burst(wp,PAL.gold,14,2.5);
+  spawnShards(wp,{flyer:PAL.rose,diver:PAL.lav,turret:PAL.terra,carrier:PAL.gold,midboss:PAL.tealD}[e.kind]||PAL.cream);
   boom(.16,.3,700);
   addScore(e.score);
   if(e.drop) spawnDrop(wp,e.drop);
   shake=Math.min(shake+.15,.5);
+}
+/* 幾何碎片(擊破時噴出的小方塊,MV 風) */
+const shards=[];
+const shardGeo=new THREE.BoxGeometry(.28,.28,.28);
+function spawnShards(pos,hex){
+  for(let k=0;k<6;k++){
+    let m=shards.find(s=>!s.active);
+    if(!m){ if(shards.length>42) break;
+      m={obj:new THREE.Mesh(shardGeo,null),active:false}; scene.add(m.obj); shards.push(m); }
+    m.active=true; m.obj.visible=true;
+    m.obj.material=pastel(hex);
+    m.obj.position.copy(pos);
+    m.obj.scale.setScalar(rnd(.5,1.1));
+    m.v=new THREE.Vector3(rnd(-3,3),rnd(2,5),rnd(-3,3));
+    m.rv=new THREE.Vector3(rnd(-6,6),rnd(-6,6),0);
+    m.life=rnd(.8,1.3); m.age=0;
+  }
+}
+function updateShards(dt){
+  shards.forEach(s=>{
+    if(!s.active) return;
+    s.age+=dt;
+    if(s.age>=s.life){ s.active=false; s.obj.visible=false; return; }
+    s.v.y-=9*dt;
+    s.obj.position.addScaledVector(s.v,dt);
+    s.obj.rotation.x+=s.rv.x*dt; s.obj.rotation.y+=s.rv.y*dt;
+    s.obj.scale.multiplyScalar(1-1.2*dt);
+  });
 }
 
 /* ---------- 敵彈 ---------- */
@@ -859,8 +964,9 @@ function startGame(){
   $('hud').style.display='block';
   state='play';
   toast('STAGE 1・天空聖殿');
-  ac();
+  ac(); bgmStart();
 }
+$('btnMute').addEventListener('click',()=>{ muted=!muted; $('btnMute').textContent=muted?'🔇':'🔊'; });
 $('btnStart').addEventListener('click',startGame);
 $('btnRetry').addEventListener('click',startGame);
 $('btnTitle').addEventListener('click',()=>{ $('over').classList.remove('show'); $('hud').style.display='none'; $('title').classList.add('show'); state='title'; });
@@ -987,6 +1093,11 @@ function update(dt){
     sh.position.set(player.pos.x,.06,player.pos.z);
     ship.getObjectByName('shield').visible=player.inv>0&&player.alive;
     ship.getObjectByName('tail').material=glow(player.wpn==='vulcan'?0xffb490:0xaef2ff);
+    // 機尾光跡
+    if(pData.length<PMAX-2) pData.push({
+      p:player.pos.clone().add(new THREE.Vector3(rnd(-.08,.08),.05,.62)),
+      v:new THREE.Vector3(rnd(-.3,.3),rnd(-.4,.1),3.2),
+      life:.32,age:0,c:new THREE.Color(player.wpn==='vulcan'?0xffb490:0x9fe8ff)});
   }
   /* 捲軸 */
   if(state==='play'){
@@ -1067,10 +1178,19 @@ function update(dt){
     if(d.position.z>16&&state!=='clearing') resetDove(d);
   });
   updateParticles(dt);
-  /* 相機震動 */
+  updateShards(dt);
+  clouds.forEach(c=>{
+    c.position.z+=c.userData.vz*dt;
+    if(c.position.z>16){ c.position.z=-58; c.position.x=rnd(-28,28); }
+  });
+  /* 相機:輕微呼吸飄移 + 震動 */
   shake=Math.max(0,shake-dt*1.6);
-  camera.position.set(rnd(-1,1)*shake*.4, 34+rnd(-1,1)*shake*.3, 23);
-  camera.lookAt(rnd(-1,1)*shake*.3,0,2.5);
+  const bt=performance.now()*.00035;
+  camera.position.set(
+    CAM_POS.x+Math.sin(bt)*.5+rnd(-1,1)*shake*.4,
+    CAM_POS.y+Math.sin(bt*1.7)*.3+rnd(-1,1)*shake*.3,
+    CAM_POS.z);
+  camera.lookAt(CAM_TGT.x+rnd(-1,1)*shake*.3,CAM_TGT.y,CAM_TGT.z);
 }
 
 /* ---------- loop ---------- */
